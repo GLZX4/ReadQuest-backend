@@ -89,3 +89,53 @@ function calculateDifficultyLevel(metrics) {
 }
 
 module.exports = { calculateMetrics, calculateDifficultyLevel };
+
+/*
+* Adds default performance metrics for a new user.
+* @param {Pool} pool - The PostgreSQL database client.
+* @param {number} userID - The user ID.
+*/
+const addDefaultMetrics = async (pool, userID) => {
+    const defaultMetrics = {
+        totalRoundsPlayed: 0,
+        averageAnswerTime: 0.0,
+        accuracyRate: 0.0,
+        attemptsPerQuestion: 0.0,
+        difficultyLevel: 'medium', // Default difficulty
+        consistencyScore: 0.0,
+        completionRate: 0.0,
+    };
+
+    try {
+        await pool.query(
+            `INSERT INTO PerformanceMetrics (
+                userID, 
+                totalRoundsPlayed, 
+                averageAnswerTime, 
+                accuracyRate, 
+                attemptsPerQuestion, 
+                difficultyLevel, 
+                consistencyScore, 
+                completionRate, 
+                lastUpdated
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+            [
+                userID,
+                defaultMetrics.totalRoundsPlayed,
+                defaultMetrics.averageAnswerTime,
+                defaultMetrics.accuracyRate,
+                defaultMetrics.attemptsPerQuestion,
+                defaultMetrics.difficultyLevel,
+                defaultMetrics.consistencyScore,
+                defaultMetrics.completionRate,
+            ]
+        );
+        console.log(`Default metrics created for userID: ${userID}`);
+    } catch (error) {
+        console.error('Error creating default metrics:', error);
+        throw error;
+    }
+};
+
+module.exports = { calculateMetrics, calculateDifficultyLevel, addDefaultMetrics };
+

@@ -112,52 +112,106 @@ module.exports = (pool) => {
         }
     });
 
-    // Register an admin user
-router.post('/register-admin', async (req, res) => {
-    const { name, email, password } = req.body;
-    const role = 'admin'; // The role for this user is always "admin"
 
-    // Validate input
-    if (!name || !email || !password) {
-        return res.status(400).json({ message: 'All fields are required.' });
-    }
+        // Register an admin user
+    router.post('/register-admin', async (req, res) => {
+        const { name, email, password } = req.body;
+        const role = 'admin'; // The role for this user is always "admin"
 
-    try {
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Check if the admin role exists
-        let roleResult = await pool.query('SELECT roleID FROM Roles WHERE Role = $1', [role]);
-        let roleID;
-
-        if (roleResult.rows.length > 0) {
-            roleID = roleResult.rows[0].roleid;
-        } else {
-            // If the admin role doesn't exist, create it
-            const newRole = await pool.query('INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID', [role]);
-            roleID = newRole.rows[0].roleid;
+        // Validate input
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: 'All fields are required.' });
         }
 
-        // Check if the email already exists
-        const emailCheck = await pool.query('SELECT * FROM Users WHERE Email = $1', [email]);
-        if (emailCheck.rows.length > 0) {
-            return res.status(409).json({ message: 'Email already exists.' });
+        try {
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Check if the admin role exists
+            let roleResult = await pool.query('SELECT roleID FROM Roles WHERE Role = $1', [role]);
+            let roleID;
+
+            if (roleResult.rows.length > 0) {
+                roleID = roleResult.rows[0].roleid;
+            } else {
+                // If the admin role doesn't exist, create it
+                const newRole = await pool.query('INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID', [role]);
+                roleID = newRole.rows[0].roleid;
+            }
+
+            // Check if the email already exists
+            const emailCheck = await pool.query('SELECT * FROM Users WHERE Email = $1', [email]);
+            if (emailCheck.rows.length > 0) {
+                return res.status(409).json({ message: 'Email already exists.' });
+            }
+
+            // Insert the admin user into the database
+            await pool.query(
+                `INSERT INTO Users (Name, Email, UserPassword, roleID) 
+                VALUES ($1, $2, $3, $4)`,
+                [name, email, hashedPassword, roleID]
+            );
+
+            res.status(201).json({ message: 'Admin registered successfully.' });
+        } catch (error) {
+            console.error('Error during admin registration:', error);
+            res.status(500).json({ message: 'Internal server error.' });
+        }
+    });
+
+
+        // Register a tutor
+    router.post('/register-tutor', async (req, res) => {
+        const { name, email, password, verificationCode } = req.body;
+
+        if (!name || !email || !password || !verificationCode) {
+            return res.status(400).json({ message: 'All fields are required.' });
         }
 
-        // Insert the admin user into the database
-        await pool.query(
-            `INSERT INTO Users (Name, Email, UserPassword, roleID) 
-             VALUES ($1, $2, $3, $4)`,
-            [name, email, hashedPassword, roleID]
-        );
+        try {
+            // Check if the verification code exists and is valid
+            const codeResult = await pool.query(
+                `SELECT * FROM VerificationCode WHERE code = $1 AND expirationAt > NOW() AND used = FALSE`,
+                [verificationCode]
+            );
 
-        res.status(201).json({ message: 'Admin registered successfully.' });
-    } catch (error) {
-        console.error('Error during admin registration:', error);
-        res.status(500).json({ message: 'Internal server error.' });
-    }
-});
+            if (codeResult.rows.length === 0) {
+                return res.status(400).json({ message: 'Invalid or expired verification code.' });
+            }
 
+            const { schoolID } = codeResult.rows[0]; // Retrieve associated school ID
+
+            // Check if the tutor role exists
+            let roleResult = await pool.query('SELECT roleID FROM Roles WHERE Role = $1', ['tutor']);
+            let roleID;
+
+            if (roleResult.rows.length > 0) {
+                roleID = roleResult.rows[0].roleid;
+            } else {
+                // If the tutor role doesn't exist, create it
+                const newRole = await pool.query('INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID', ['tutor']);
+                roleID = newRole.rows[0].roleid;
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Insert the new tutor into the Users table
+            await pool.query(
+                `INSERT INTO Users (Name, Email, UserPassword, roleID, schoolID) 
+                VALUES ($1, $2, $3, $4, $5)`,
+                [name, email, hashedPassword, roleID, schoolID]
+            );
+
+            // Mark the verification code as used
+            await pool.query(`UPDATE VerificationCode SET used = TRUE WHERE code = $1`, [verificationCode]);
+
+            res.status(201).json({ message: 'Tutor registered successfully.' });
+        } catch (error) {
+            console.error('Error during tutor registration:', error);
+            res.status(500).json({ message: 'Internal server error.' });
+        }
+    });
 
     return router;
 };

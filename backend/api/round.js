@@ -7,28 +7,39 @@ module.exports = (pool) => {
     // Select a round by difficulty and return roundID and qBankID
     router.get('/select-by-difficulty', async (req, res) => {
         const { difficulty } = req.query;
-
+    
+        console.log('Received request for difficulty:', difficulty); // Log the incoming difficulty
+    
         if (typeof difficulty !== 'string') {
+            console.error('Invalid difficulty parameter type:', typeof difficulty);
             return res.status(400).json({ message: 'Invalid difficulty parameter type' });
         }
-
+    
         try {
+            console.log('Executing query to fetch rounds with difficulty:', difficulty);
+    
             const rounds = await pool.query(
                 'SELECT roundID, QBankID FROM Rounds WHERE DifficultyLevel = $1',
                 [difficulty]
             );
-
+    
+            console.log('Query executed. Rounds result:', rounds.rows);
+    
             if (rounds.rows.length === 0) {
+                console.warn('No rounds found for difficulty level:', difficulty);
                 return res.status(404).json({ message: 'No rounds found for this difficulty level' });
             }
-
+    
             const selectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
+            console.log('Selected round:', selectedRound);
+    
             res.json(selectedRound);
         } catch (error) {
             console.error('Error fetching round:', error);
             res.status(500).json({ message: 'Error fetching round' });
         }
     });
+    
 
     // Retrieve question bank by QBankID
     router.get('/retrieve-qBank', async (req, res) => {
@@ -91,11 +102,15 @@ module.exports = (pool) => {
             return res.status(400).json({ message: 'questionID and selectedAnswer are required' });
         }
 
+        console.log('Validating answer:', selectedAnswer, 'for question:', questionID);
+
         try {
             const result = await pool.query(
                 'SELECT CorrectAnswer FROM QuestionBank WHERE QuestionID = $1',
                 [questionID]
             );
+
+            console.log('Correct Answer result:', result.rows, 'selectedAnswer: ',selectedAnswer);
 
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Question not found' });
@@ -104,10 +119,7 @@ module.exports = (pool) => {
             const correctAnswer = result.rows[0].correctanswer;
             const isCorrect = selectedAnswer === correctAnswer;
 
-            res.json({
-                isCorrect,
-                correctAnswer, // Optionally include this if you want the frontend to display it
-            });
+            res.json(isCorrect);
         } catch (error) {
             console.error('Error validating answer:', error);
             res.status(500).json({ message: 'Error validating answer' });
