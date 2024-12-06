@@ -83,17 +83,7 @@ module.exports = (pool) => {
             consistency,
             completionRate: sanitizedCompletionRate,
         });
-    
-        console.log("Sanitized Values:", {
-            sanitizedAccuracyRate,
-            sanitizedCompletionRate,
-            sanitizedAverageAnswerTime,
-            attemptsPerQuestion,
-            difficultyLevel,
-            consistency,
-            userID,
-        });
-    
+
         // Attempt to update or insert the metrics
         try {
             await pool.query(
@@ -130,6 +120,5 @@ module.exports = (pool) => {
         }
     });
     
-
     return router;
 };
