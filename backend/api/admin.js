@@ -1,4 +1,5 @@
 const express = require('express');
+const verifyToken = require('../middleware/authMiddleware');
 require('dotenv').config();
 
 module.exports = (pool) => {
@@ -12,7 +13,7 @@ module.exports = (pool) => {
     };
 
     // Get admin data
-    router.get('/fetchAdminData', async (req, res) => {
+    router.get('/fetchAdminData', verifyToken, async (req, res) => {
         try {
             // Fetch active users count
             const activeUsersResult = await pool.query('SELECT COUNT(*) AS activeUsersCount FROM Users WHERE loggedIn = TRUE');
@@ -34,7 +35,7 @@ module.exports = (pool) => {
     });
 
     // Tutor account code generation submission
-    router.post('/tutorAccountCode', async (req, res) => {
+    router.post('/tutorAccountCode', verifyToken, async (req, res) => {
         const { verificationCode, schoolID, expirationAt, used = false, createdAt = new Date() } = req.body;
 
         try {
@@ -68,7 +69,7 @@ module.exports = (pool) => {
     });
 
     // Fetch schools endpoint
-    router.get('/schoolsFetch', async (req, res) => {
+    router.get('/schoolsFetch', verifyToken, async (req, res) => {
         try {
             const result = await pool.query('SELECT * FROM Schools');
             console.log('Fetched Schools:', result.rows); // Debugging log

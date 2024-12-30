@@ -1,11 +1,12 @@
 const express = require('express');
+const verifyToken = require('../middleware/authMiddleware');
 require('dotenv').config();
 
 module.exports = (pool) => {
     const router = express.Router();
 
     // Select a round by difficulty and return roundID and qBankID
-    router.get('/select-by-difficulty', async (req, res) => {
+    router.get('/select-by-difficulty', verifyToken, async (req, res) => {
         const { difficulty } = req.query;
     
         console.log('Received request for difficulty:', difficulty); // Log the incoming difficulty
@@ -42,7 +43,7 @@ module.exports = (pool) => {
     
 
     // Retrieve question bank by QBankID
-    router.get('/retrieve-qBank', async (req, res) => {
+    router.get('/retrieve-qBank', verifyToken, async (req, res) => {
         const { QBankID } = req.query;
 
         if (!QBankID) {
@@ -64,7 +65,7 @@ module.exports = (pool) => {
     });
 
     // Get a specific question by QBankID and questionIndex
-    router.get('/get-question', async (req, res) => {
+    router.get('/get-question', verifyToken, async (req, res) => {
         const { qBankID, questionIndex } = req.query;
 
         if (!qBankID || questionIndex === undefined) {
@@ -95,7 +96,7 @@ module.exports = (pool) => {
     });
 
     // Route to validate an answer
-    router.post('/validate-answer', async (req, res) => {
+    router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
 
         if (!questionID || !selectedAnswer) {

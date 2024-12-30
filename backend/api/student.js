@@ -1,5 +1,6 @@
 // backend/api/student.js
 const express = require('express');
+const verifyToken = require('../middleware/authMiddleware');
 require('dotenv').config();
 
 const router = express.Router();
@@ -7,7 +8,7 @@ const router = express.Router();
 module.exports = (pool) => {
 
     // Get all student rounds completed
-    router.get('/completed-rounds', async (req, res) => {
+    router.get('/completed-rounds', verifyToken, async (req, res) => {
         const { userID } = req.query;
     
         if (!userID) {

@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const verifyToken = require('../middleware/authMiddleware');
 require('dotenv').config();
 
 module.exports = (pool) => {
@@ -57,46 +58,34 @@ module.exports = (pool) => {
     // Login a user
     router.post('/login', async (req, res) => {
         const { email, password } = req.body;
-
+      
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required.' });
+          return res.status(400).json({ message: 'Email and password are required.' });
         }
-
+      
         try {
-            const result = await pool.query(
-                `SELECT u.*, r.Role 
-                 FROM Users u
-                 JOIN Roles r ON u.roleID = r.roleID
-                 WHERE u.Email = $1`,
-                [email]
-            );
-
-            if (result.rows.length === 0) {
-                return res.status(401).json({ message: 'Invalid email or password.' });
-            }
-
-            const user = result.rows[0];
-
-            // Check password
-            const passwordMatch = await bcrypt.compare(password, user.userpassword);
-            if (!passwordMatch) {
-                return res.status(401).json({ message: 'Invalid email or password.' });
-            }
-
-            // Generate JWT token
-            const token = jwt.sign({ userId: user.userid, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-            res.json({ token, name: user.name });
-
-            // Update login status
-            await pool.query('UPDATE Users SET loggedIn = TRUE WHERE Email = $1', [email]);
+          const result = await pool.query(`SELECT * FROM Users WHERE Email = $1`, [email]);
+          if (result.rows.length === 0) {
+            return res.status(401).json({ message: 'Invalid email or password.' });
+          }
+      
+          const user = result.rows[0];
+          const passwordMatch = await bcrypt.compare(password, user.userpassword);
+          if (!passwordMatch) {
+            return res.status(401).json({ message: 'Invalid email or password.' });
+          }
+      
+          const token = jwt.sign({ userId: user.userid, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+          res.json({ token, name: user.name });
         } catch (error) {
-            console.error('Error during login:', error);
-            res.status(500).json({ message: 'Error logging in user.' });
+          console.error('Error during login:', error);
+          res.status(500).json({ message: 'Internal server error', error: error.message });
         }
-    });
+      });
+      
 
     // Logout a user
-    router.post('/logout', async (req, res) => {
+    router.post('/logout', verifyToken, async (req, res) => {
         const { email } = req.body;
 
         console.log('Logging out user:', email);

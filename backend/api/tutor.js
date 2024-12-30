@@ -2,6 +2,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const verifyToken = require('../middleware/authMiddleware');
 require('dotenv').config();
 
 const router = express.Router();
@@ -23,7 +24,7 @@ module.exports = (pool) => {
     });
 
     // Get student list for a tutor
-    router.get('/studentsList', async (req, res) => {
+    router.get('/studentsList', verifyToken, async (req, res) => {
         const { tutorID } = req.query;
 
         console.log('Received request for studentsList:', tutorID);

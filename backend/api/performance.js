@@ -1,5 +1,6 @@
 const express = require('express');
 require('dotenv').config();
+const verifyToken = require('../middleware/authMiddleware');
 
 const { calculateDifficultyLevel, addDefaultMetrics } = require('../services/MetricsService');
 
@@ -7,7 +8,7 @@ module.exports = (pool) => {
     const router = express.Router();
 
     // Get performance metrics for round selection
-    router.get('/students/get-difficulty', async (req, res) => {
+    router.get('/students/get-difficulty', verifyToken, async (req, res) => {
         const { userID } = req.query;
         console.log('userID:', userID);
 
@@ -34,7 +35,7 @@ module.exports = (pool) => {
 
 
     // Get current performance metrics for a specific student
-    router.get('/tutor/current-specific-metric/:userID', async (req, res) => {
+    router.get('/tutor/current-specific-metric/:userID', verifyToken, async (req, res) => {
         const { userID } = req.params;
 
         try {
@@ -55,7 +56,7 @@ module.exports = (pool) => {
 
 
 
-    router.post('/students/update-metrics', async (req, res) => {
+    router.post('/students/update-metrics', verifyToken, async (req, res) => {
         console.log('Entered update metrics');
     
         const { accuracyRate, averageAnswerTime, attemptsPerQuestion, consistency, completionRate, userID } = req.body;

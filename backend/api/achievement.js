@@ -1,12 +1,13 @@
 const express = require('express');
 require('dotenv').config();
+const verifyToken = require('../middleware/authMiddleware');
 
 
 module.exports = (pool) => {
     const router = express.Router();
 
     // Update progress for a student's achievements
-    router.post('/update-progress', async (req, res) => {
+    router.post('/update-progress', verifyToken, async (req, res) => {
         const { studentId, metric, value } = req.body;
 
         if (!studentId || !metric || value === undefined) {
