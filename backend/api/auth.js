@@ -99,6 +99,8 @@ module.exports = (pool) => {
     router.post('/logout', async (req, res) => {
         const { email } = req.body;
 
+        console.log('Logging out user:', email);
+
         if (!email) {
             return res.status(400).json({ message: 'Email is required.' });
         }

@@ -1,5 +1,8 @@
 const { Pool } = require('pg');
-require('dotenv').config({ path: '../readquestDB.env' }); // Load environment variables
+const path = require('path');
+require('dotenv').config({ 
+    path: path.join(__dirname, '../../readquestDB.env') // Adjust relative path from the backend folder
+});
 
 // Set up the PostgreSQL connection pool
 const pool = new Pool({
