@@ -81,7 +81,7 @@ module.exports = (pool) => {
     });
 
     // Add a school endpoint
-    router.post('/addSchool', async (req, res) => {
+    router.post('/addSchool', verifyToken, async (req, res) => {
         const { schoolName, schoolCode, address, contactEmail, contactPhone } = req.body;
 
         if (!schoolName || !schoolCode || !address || !contactEmail || !contactPhone) {
