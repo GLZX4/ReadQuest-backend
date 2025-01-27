@@ -67,14 +67,22 @@ module.exports = (pool) => {
     // Get a specific question by QBankID and questionIndex
     router.get('/get-question', verifyToken, async (req, res) => {
         const { qBankID, questionIndex } = req.query;
-
+    
+        console.log('--- Debugging Hosted Backend: /get-question ---');
+        console.log('Received qBankID:', qBankID);
+        console.log('Received questionIndex:', questionIndex);
+    
         if (!qBankID || questionIndex === undefined) {
+            console.error('Missing required parameters: qBankID or questionIndex');
             return res.status(400).json({ message: 'qBankID and questionIndex are required' });
         }
-
+    
         try {
             const questionIdx = parseInt(questionIndex, 10);
-
+    
+            console.log('Parsed questionIndex:', questionIdx);
+            console.log('Executing SQL query with QBankID:', qBankID, 'and OFFSET:', questionIdx);
+    
             const result = await pool.query(
                 `SELECT * 
                  FROM QuestionBank 
@@ -83,14 +91,18 @@ module.exports = (pool) => {
                  OFFSET $2 LIMIT 1`,
                 [qBankID, questionIdx]
             );
-
+    
+            console.log('SQL Query Result:', result.rows);
+    
             if (result.rows.length === 0) {
+                console.warn('No question found for QBankID:', qBankID, 'and questionIndex:', questionIndex);
                 return res.status(404).json({ message: 'Question not found' });
             }
-
+    
+            console.log('Returning question:', result.rows[0]);
             res.json(result.rows[0]);
         } catch (error) {
-            console.error('Error fetching question:', error);
+            console.error('Error during SQL query execution:', error);
             res.status(500).json({ message: 'Error fetching question' });
         }
     });
