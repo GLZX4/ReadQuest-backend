@@ -106,7 +106,7 @@ module.exports = (pool) => {
       
 
     // Logout a user
-    router.post('/logout', verifyToken, async (req, res) => {
+    router.post('/logout', async (req, res) => {
         const { email } = req.body;
 
         console.log('Logging out user:', email);
