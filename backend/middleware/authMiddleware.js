@@ -6,9 +6,11 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Handle cases where authHeader might be null
+    const token = authHeader && authHeader.split(' ')[1];
+
     console.log('Authorization Header:', authHeader);
-    console.log('Token from header:', token);
+    console.log('Extracted Token:', token);
+    console.log('JWT_SECRET:', JWT_SECRET);
 
     if (!token) {
         console.error('No token provided');
@@ -16,17 +18,15 @@ const verifyToken = (req, res, next) => {
     }
 
     try {
-        console.log('JWT_SECRET:', JWT_SECRET); // Log the secret for debugging
         const decoded = jwt.verify(token, JWT_SECRET);
         console.log('Decoded Token:', decoded);
-
         req.user = decoded; // Attach decoded user information to the request
         next(); // Pass control to the next middleware/route handler
     } catch (error) {
         console.error('Token verification error:', error.message);
         res.status(401).json({ 
             message: 'Invalid or expired token', 
-            error: error.message // Include error message for debugging
+            error: error.message 
         });
     }
 };
