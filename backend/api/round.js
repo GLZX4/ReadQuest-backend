@@ -80,10 +80,11 @@ module.exports = (pool) => {
         try {
             const questionIdx = parseInt(questionIndex, 10);
     
+            console.log('Parsed questionIndex:', questionIdx);
             console.log('Executing SQL query with QBankID:', qBankID, 'and OFFSET:', questionIdx);
     
             const result = await pool.query(
-                `SELECT QuestionID, QuestionText, QuestionType, AnswerOptions, CorrectAnswer, AdditionalData
+                `SELECT * 
                  FROM QuestionBank 
                  WHERE QBankID = $1
                  ORDER BY QuestionID
@@ -99,18 +100,20 @@ module.exports = (pool) => {
             }
     
             const question = result.rows[0];
+            const additionalData = question.additionaldata;
     
-            // Parse JSON fields if needed
-            question.answerOptions = JSON.parse(question.answeroptions || "[]");
-            question.additionalData = JSON.parse(question.additionaldata || "{}");
+            console.log('Additional Data:', additionalData);
     
-            console.log('Returning question:', question);
-            res.json(question);
+            res.json({
+                ...question,
+                additionaldata: additionalData,
+            });
         } catch (error) {
             console.error('Error during SQL query execution:', error);
             res.status(500).json({ message: 'Error fetching question' });
         }
     });
+    
     
     // Route to validate an answer
     router.post('/validate-answer', verifyToken, async (req, res) => {
