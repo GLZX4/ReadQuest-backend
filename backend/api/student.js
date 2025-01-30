@@ -41,7 +41,6 @@ module.exports = (pool) => {
     // Fetch achievements for a specific student
     router.get('/fetch-achievements', async (req, res) => {
         const { studentId } = req.query;
-        console.log('entered fetch achievements');
 
         if (!studentId) {
             return res.status(400).json({ message: 'Student ID is required' });

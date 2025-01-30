@@ -80,11 +80,10 @@ module.exports = (pool) => {
         try {
             const questionIdx = parseInt(questionIndex, 10);
     
-            console.log('Parsed questionIndex:', questionIdx);
             console.log('Executing SQL query with QBankID:', qBankID, 'and OFFSET:', questionIdx);
     
             const result = await pool.query(
-                `SELECT * 
+                `SELECT QuestionID, QuestionText, QuestionType, AnswerOptions, CorrectAnswer, AdditionalData
                  FROM QuestionBank 
                  WHERE QBankID = $1
                  ORDER BY QuestionID
@@ -99,45 +98,87 @@ module.exports = (pool) => {
                 return res.status(404).json({ message: 'Question not found' });
             }
     
-            console.log('Returning question:', result.rows[0]);
-            res.json(result.rows[0]);
+            const question = result.rows[0];
+    
+            // Parse JSON fields if needed
+            question.answerOptions = JSON.parse(question.answeroptions || "[]");
+            question.additionalData = JSON.parse(question.additionaldata || "{}");
+    
+            console.log('Returning question:', question);
+            res.json(question);
         } catch (error) {
             console.error('Error during SQL query execution:', error);
             res.status(500).json({ message: 'Error fetching question' });
         }
     });
-
+    
     // Route to validate an answer
     router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
-
+    
         if (!questionID || !selectedAnswer) {
             return res.status(400).json({ message: 'questionID and selectedAnswer are required' });
         }
-
+    
         console.log('Validating answer:', selectedAnswer, 'for question:', questionID);
-
+    
         try {
             const result = await pool.query(
-                'SELECT CorrectAnswer FROM QuestionBank WHERE QuestionID = $1',
+                'SELECT QuestionType, CorrectAnswer FROM QuestionBank WHERE QuestionID = $1',
                 [questionID]
             );
-
-            console.log('Correct Answer result:', result.rows, 'selectedAnswer: ',selectedAnswer);
-
+    
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Question not found' });
             }
-
-            const correctAnswer = result.rows[0].correctanswer;
-            const isCorrect = selectedAnswer === correctAnswer;
-
-            res.json(isCorrect);
+    
+            const { questiontype, correctanswer } = result.rows[0];
+    
+            console.log('Question Type:', questiontype);
+            console.log('Correct Answer from DB:', correctanswer);
+            console.log('User Selected Answer:', selectedAnswer);
+    
+            let isCorrect = false;
+    
+            switch (questiontype) {
+                case 'multiple_choice':
+                    isCorrect = selectedAnswer === correctanswer;
+                    break;
+    
+                case 'drag_drop':
+                    try {
+                        const correctAnswerObj = JSON.parse(correctanswer);
+                        const selectedAnswerObj = JSON.parse(selectedAnswer);
+                        isCorrect = JSON.stringify(correctAnswerObj) === JSON.stringify(selectedAnswerObj);
+                    } catch (error) {
+                        console.error('Error parsing JSON for drag-drop answer:', error);
+                        return res.status(400).json({ message: 'Invalid answer format for drag-drop' });
+                    }
+                    break;
+    
+                case 'sentence_reorder':
+                    try {
+                        const correctOrder = JSON.parse(correctanswer);
+                        const selectedOrder = JSON.parse(selectedAnswer);
+                        isCorrect = JSON.stringify(correctOrder) === JSON.stringify(selectedOrder);
+                    } catch (error) {
+                        console.error('Error parsing JSON for sentence reordering:', error);
+                        return res.status(400).json({ message: 'Invalid answer format for sentence reorder' });
+                    }
+                    break;
+    
+                default:
+                    return res.status(400).json({ message: 'Unsupported question type' });
+            }
+    
+            console.log('Is Correct:', isCorrect);
+            res.json({ isCorrect });
         } catch (error) {
             console.error('Error validating answer:', error);
             res.status(500).json({ message: 'Error validating answer' });
         }
     });
+    
 
     return router;
 };
