@@ -18,9 +18,9 @@ module.exports = (pool) => {
         }
 
         try {
-            // Check if school exists
+            // Fetch school
             const schoolResult = await pool.query(
-                'SELECT schoolID FROM Schools WHERE schoolCode = $1',
+                'SELECT schoolid FROM Schools WHERE schoolcode = $1',
                 [schoolCode]
             );
             if (schoolResult.rows.length === 0) {
@@ -28,32 +28,35 @@ module.exports = (pool) => {
             }
             const schoolID = schoolResult.rows[0].schoolid;
 
-            // Check if role exists
-            let roleResult = await pool.query('SELECT roleID FROM Roles WHERE Role = $1', [role]);
-            let roleID;
+            // Fetch or insert role
+            const roleResult = await pool.query(
+                'SELECT roleID FROM Roles WHERE Role = $1',
+                [role]
+            );
+            const roleID = roleResult.rows.length
+                ? roleResult.rows[0].roleid
+                : (await pool.query(
+                    'INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID',
+                    [role]
+                )).rows[0].roleid;
 
-            if (roleResult.rows.length > 0) {
-                roleID = roleResult.rows[0].roleid;
-            } else {
-                const newRole = await pool.query('INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID', [role]);
-                roleID = newRole.rows[0].roleid;
-            }
-
-            // Hash the password
+            // Hash password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Insert new user
+            // Insert user
             await pool.query(
                 `INSERT INTO Users (Name, Email, UserPassword, roleID, schoolID) 
-                 VALUES ($1, $2, $3, $4, $5)`,
+                VALUES ($1, $2, $3, $4, $5)`,
                 [name, email, hashedPassword, roleID, schoolID]
             );
+
             res.status(201).json({ message: 'User registered successfully.' });
         } catch (error) {
             console.error('Error during registration:', error);
             res.status(500).json({ message: 'Internal server error.' });
         }
     });
+
 
     // Login a user
     router.post('/login', async (req, res) => {
