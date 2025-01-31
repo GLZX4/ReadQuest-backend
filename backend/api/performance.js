@@ -56,70 +56,34 @@ module.exports = (pool) => {
 
 
 
-    router.post('/students/update-metrics', verifyToken, async (req, res) => {
-        console.log('Entered update metrics');
+    router.post('/update-metrics', verifyToken, async (req, res) => {
+        const { userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, completionRate } = req.body;
     
-        const { accuracyRate, averageAnswerTime, attemptsPerQuestion, consistency, completionRate, userID } = req.body;
-    
-        const sanitizedCompletionRate = Math.min(Math.max(completionRate, 0), 100); // Clamp between 0 and 100
-        const sanitizedAccuracyRate = Math.min(Math.max(accuracyRate, 0), 100); // Clamp between 0 and 100
-        const sanitizedAverageAnswerTime = Math.max(averageAnswerTime, 0); // Minimum value of 0
-    
-        // Validation
-        if (
-            sanitizedAccuracyRate < 0 || sanitizedAccuracyRate > 100 ||
-            sanitizedAverageAnswerTime < 0 ||
-            attemptsPerQuestion < 0 ||
-            sanitizedCompletionRate < 0 || sanitizedCompletionRate > 100
-        ) {
-            console.error('Invalid metrics received:', req.body);
-            return res.status(400).json({ message: 'Invalid performance metrics' });
+        if (!userID) {
+            return res.status(400).json({ message: 'userID is required' });
         }
     
-        // Calculate the new difficulty level
-        const difficultyLevel = calculateDifficultyLevel({
-            accuracyRate: sanitizedAccuracyRate,
-            averageAnswerTime: sanitizedAverageAnswerTime,
-            attemptsPerQuestion,
-            consistency,
-            completionRate: sanitizedCompletionRate,
-        });
-
-        // Attempt to update or insert the metrics
         try {
             await pool.query(
-                `INSERT INTO PerformanceMetrics (
-                    userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, 
-                    attemptsPerQuestion, difficultyLevel, consistencyScore, 
-                    completionRate, lastUpdated
-                ) VALUES (
-                    $1, 1, $2, $3, $4, $5, $6, $7, NOW()
-                )
-                ON CONFLICT (userID) DO UPDATE
-                SET accuracyRate = $3,
-                    averageAnswerTime = $2,
-                    attemptsPerQuestion = $4,
-                    difficultyLevel = $5,
-                    consistencyScore = $6,
-                    completionRate = $7,
-                    totalRoundsPlayed = PerformanceMetrics.totalRoundsPlayed + 1,
-                    lastUpdated = NOW()`,
-                [
-                    userID,
-                    sanitizedAverageAnswerTime,
-                    sanitizedAccuracyRate,
-                    attemptsPerQuestion,
-                    difficultyLevel,
-                    consistency,
-                    sanitizedCompletionRate,
-                ]
+                `INSERT INTO PerformanceMetrics (userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, completionRate, lastUpdated)
+                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                 ON CONFLICT (userID)
+                 DO UPDATE SET
+                     totalRoundsPlayed = $2,
+                     averageAnswerTime = $3,
+                     accuracyRate = $4,
+                     completionRate = $5,
+                     lastUpdated = CURRENT_TIMESTAMP`,
+                [userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, completionRate]
             );
+    
             res.status(200).json({ message: 'Metrics updated successfully' });
         } catch (error) {
-            console.error('Error updating performance metrics:', error);
-            res.status(500).json({ message: 'Error updating performance metrics' });
+            console.error('Error updating metrics:', error);
+            res.status(500).json({ message: 'Error updating metrics' });
         }
     });
+    
     
     return router;
 };

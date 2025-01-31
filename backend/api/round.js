@@ -7,39 +7,33 @@ module.exports = (pool) => {
 
     // Select a round by difficulty and return roundID and qBankID
     router.get('/select-by-difficulty', verifyToken, async (req, res) => {
-        const { difficulty } = req.query;
+        const { difficultyLevel } = req.query;
     
-        console.log('Received request for difficulty:', difficulty); // Log the incoming difficulty
-    
-        if (typeof difficulty !== 'string') {
-            console.error('Invalid difficulty parameter type:', typeof difficulty);
-            return res.status(400).json({ message: 'Invalid difficulty parameter type' });
+        if (!difficultyLevel) {
+            return res.status(400).json({ message: 'difficultyLevel is required' });
         }
     
         try {
-            console.log('Executing query to fetch rounds with difficulty:', difficulty);
-    
             const rounds = await pool.query(
-                'SELECT roundID, QBankID FROM Rounds WHERE DifficultyLevel = $1',
-                [difficulty]
+                `SELECT roundID, qBankID, difficultyLevel, status
+                 FROM Rounds
+                 WHERE difficultyLevel = $1
+                 AND status = 'incomplete'
+                 LIMIT 1`,
+                [difficultyLevel]
             );
     
-            console.log('Query executed. Rounds result:', rounds.rows);
-    
             if (rounds.rows.length === 0) {
-                console.warn('No rounds found for difficulty level:', difficulty);
-                return res.status(404).json({ message: 'No rounds found for this difficulty level' });
+                return res.status(404).json({ message: 'No rounds found' });
             }
     
-            const selectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
-            console.log('Selected round:', selectedRound);
-    
-            res.json(selectedRound);
+            res.json(rounds.rows[0]);
         } catch (error) {
             console.error('Error fetching round:', error);
             res.status(500).json({ message: 'Error fetching round' });
         }
     });
+    
     
 
     // Retrieve question bank by QBankID
@@ -68,51 +62,31 @@ module.exports = (pool) => {
     router.get('/get-question', verifyToken, async (req, res) => {
         const { qBankID, questionIndex } = req.query;
     
-        console.log('--- Debugging Hosted Backend: /get-question ---');
-        console.log('Received qBankID:', qBankID);
-        console.log('Received questionIndex:', questionIndex);
-    
         if (!qBankID || questionIndex === undefined) {
-            console.error('Missing required parameters: qBankID or questionIndex');
             return res.status(400).json({ message: 'qBankID and questionIndex are required' });
         }
     
         try {
-            const questionIdx = parseInt(questionIndex, 10);
-    
-            console.log('Parsed questionIndex:', questionIdx);
-            console.log('Executing SQL query with QBankID:', qBankID, 'and OFFSET:', questionIdx);
-    
             const result = await pool.query(
-                `SELECT * 
-                 FROM QuestionBank 
-                 WHERE QBankID = $1
-                 ORDER BY QuestionID
+                `SELECT questionID, questionText, questionType, answerOptions, correctAnswer, additionalData
+                 FROM Questions
+                 WHERE qBankID = $1
+                 ORDER BY questionID
                  OFFSET $2 LIMIT 1`,
-                [qBankID, questionIdx]
+                [qBankID, questionIndex]
             );
     
-            console.log('SQL Query Result:', result.rows);
-    
             if (result.rows.length === 0) {
-                console.warn('No question found for QBankID:', qBankID, 'and questionIndex:', questionIndex);
                 return res.status(404).json({ message: 'Question not found' });
             }
     
-            const question = result.rows[0];
-            const additionalData = question.additionaldata;
-    
-            console.log('Additional Data:', additionalData);
-    
-            res.json({
-                ...question,
-                additionaldata: additionalData,
-            });
+            res.json(result.rows[0]);
         } catch (error) {
-            console.error('Error during SQL query execution:', error);
+            console.error('Error fetching question:', error);
             res.status(500).json({ message: 'Error fetching question' });
         }
     });
+    
     
     
     // Route to validate an answer
