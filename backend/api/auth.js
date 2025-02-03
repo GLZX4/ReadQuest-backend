@@ -146,7 +146,7 @@ module.exports = (pool) => {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             // Check if the admin role exists
-            let roleResult = await pool.query('SELECT roleID FROM role WHERE Role = $1', [role]);
+            let roleResult = await pool.query('SELECT roleid FROM role WHERE role = $1', [role]);
             let roleID;
 
             if (roleResult.rows.length > 0) {
@@ -165,7 +165,7 @@ module.exports = (pool) => {
 
             // Insert the admin user into the database
             await pool.query(
-                `INSERT INTO Users (Name, Email, UserPassword, roleID) 
+                `INSERT INTO Users (name, email, password, roleid) 
                 VALUES ($1, $2, $3, $4)`,
                 [name, email, hashedPassword, roleID]
             );
