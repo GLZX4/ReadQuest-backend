@@ -71,7 +71,7 @@ module.exports = (pool) => {
     // Fetch schools endpoint
     router.get('/schoolsFetch', verifyToken, async (req, res) => {
         try {
-            const result = await pool.query('SELECT * FROM Schools');
+            const result = await pool.query('SELECT * FROM schools');
             console.log('Fetched Schools:', result.rows); // Debugging log
             res.status(200).json(result.rows);
         } catch (error) {
