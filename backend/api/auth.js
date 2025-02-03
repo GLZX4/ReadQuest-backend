@@ -30,13 +30,13 @@ module.exports = (pool) => {
 
             // Fetch or insert role
             const roleResult = await pool.query(
-                'SELECT roleID FROM Roles WHERE Role = $1',
+                'SELECT roleID FROM role WHERE Role = $1',
                 [role]
             );
             const roleID = roleResult.rows.length
                 ? roleResult.rows[0].roleid
                 : (await pool.query(
-                    'INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID',
+                    'INSERT INTO role (Role) VALUES ($1) RETURNING roleID',
                     [role]
                 )).rows[0].roleid;
 
@@ -71,7 +71,7 @@ module.exports = (pool) => {
             const result = await pool.query(
                 `SELECT u.*, r.role AS role_name 
                 FROM users u
-                JOIN roles r ON u.roleid = r.roleid
+                JOIN role r ON u.roleid = r.roleid
                 WHERE u.email = $1`,
                 [email]
             );
@@ -146,14 +146,14 @@ module.exports = (pool) => {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             // Check if the admin role exists
-            let roleResult = await pool.query('SELECT roleID FROM Roles WHERE Role = $1', [role]);
+            let roleResult = await pool.query('SELECT roleID FROM role WHERE Role = $1', [role]);
             let roleID;
 
             if (roleResult.rows.length > 0) {
                 roleID = roleResult.rows[0].roleid;
             } else {
                 // If the admin role doesn't exist, create it
-                const newRole = await pool.query('INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID', [role]);
+                const newRole = await pool.query('INSERT INTO role (Role) VALUES ($1) RETURNING roleID', [role]);
                 roleID = newRole.rows[0].roleid;
             }
 
@@ -200,14 +200,14 @@ module.exports = (pool) => {
             const { schoolID } = codeResult.rows[0]; // Retrieve associated school ID
 
             // Check if the tutor role exists
-            let roleResult = await pool.query('SELECT roleID FROM Roles WHERE Role = $1', ['tutor']);
+            let roleResult = await pool.query('SELECT roleID FROM role WHERE Role = $1', ['tutor']);
             let roleID;
 
             if (roleResult.rows.length > 0) {
                 roleID = roleResult.rows[0].roleid;
             } else {
                 // If the tutor role doesn't exist, create it
-                const newRole = await pool.query('INSERT INTO Roles (Role) VALUES ($1) RETURNING roleID', ['tutor']);
+                const newRole = await pool.query('INSERT INTO role (Role) VALUES ($1) RETURNING roleID', ['tutor']);
                 roleID = newRole.rows[0].roleid;
             }
 
