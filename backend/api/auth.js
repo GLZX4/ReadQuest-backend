@@ -60,53 +60,56 @@ module.exports = (pool) => {
 
     // Login a user
     router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+        const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required.' });
-    }
-
-    try {
-        // Fetch user details and role
-        const result = await pool.query(
-            `SELECT u.*, r.Role 
-             FROM Users u
-             JOIN Roles r ON u.roleID = r.roleID
-             WHERE u.Email = $1`,
-            [email]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(401).json({ message: 'Invalid email or password.' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required.' });
         }
 
-        const user = result.rows[0];
+        try {
+            // Fetch user details and role name using JOIN
+            const result = await pool.query(
+                `SELECT u.*, r.role AS role_name 
+                FROM users u
+                JOIN roles r ON u.roleid = r.roleid
+                WHERE u.email = $1`,
+                [email]
+            );
 
-        const passwordMatch = await bcrypt.compare(password, user.userpassword);
-        if (!passwordMatch) {
-            return res.status(401).json({ message: 'Invalid email or password.' });
+            if (result.rows.length === 0) {
+                return res.status(401).json({ message: 'Invalid email or password.' });
+            }
+
+            const user = result.rows[0];
+
+            // Verify password
+            const passwordMatch = await bcrypt.compare(password, user.userpassword);
+            if (!passwordMatch) {
+                return res.status(401).json({ message: 'Invalid email or password.' });
+            }
+
+            // Generate JWT token with userId and role
+            const token = jwt.sign(
+                { userId: user.userid, role: user.role_name },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+
+            // Update the user's loggedIn status
+            await pool.query('UPDATE users SET loggedin = TRUE WHERE email = $1', [email]);
+
+            // Respond with the token and user details
+            res.json({
+                token,
+                name: user.name,
+                role: user.role_name,
+            });
+        } catch (error) {
+            console.error('Error during login:', error);
+            res.status(500).json({ message: 'Error logging in user.' });
         }
-
-        const token = jwt.sign(
-            { userId: user.userid, role: user.role }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '1h' }
-        );
-
-        await pool.query('UPDATE Users SET loggedIn = TRUE WHERE Email = $1', [email]);
-
-        res.json({ 
-            token, 
-            name: user.name, 
-            role: user.role 
-        });
-    } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ message: 'Error logging in user.' });
-    }
-});
-
-      
+    });
+   
 
     // Logout a user
     router.post('/logout', async (req, res) => {
