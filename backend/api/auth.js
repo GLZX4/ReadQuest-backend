@@ -45,7 +45,7 @@ module.exports = (pool) => {
 
             // Insert user
             await pool.query(
-                `INSERT INTO Users (Name, Email, UserPassword, roleID, schoolID) 
+                `INSERT INTO Users (Name, Email, password, roleID, schoolID) 
                 VALUES ($1, $2, $3, $4, $5)`,
                 [name, email, hashedPassword, roleID, schoolID]
             );
@@ -216,7 +216,7 @@ module.exports = (pool) => {
 
             // Insert the new tutor into the Users table
             await pool.query(
-                `INSERT INTO Users (Name, Email, UserPassword, roleID, schoolID) 
+                `INSERT INTO Users (Name, Email, password, roleID, schoolID) 
                 VALUES ($1, $2, $3, $4, $5)`,
                 [name, email, hashedPassword, roleID, schoolID]
             );
