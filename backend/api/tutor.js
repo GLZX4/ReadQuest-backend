@@ -24,7 +24,7 @@ module.exports = (pool) => {
     });
 
     // fetch tutor Data(just schoolid for now)
-    router.get('/fetchTutorData', verifyToken, async (req, res) => {
+    router.get('/fetch-Tutor-Data', verifyToken, async (req, res) => {
         const { userid } = req.query;
 
         if (!userid) {
