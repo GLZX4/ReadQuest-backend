@@ -33,7 +33,7 @@ module.exports = (pool) => {
 
         try {
             const tutorData = await pool.query(
-                `SELECT schoolid FROM Tutors WHERE userid = $1`,
+                `SELECT schoolid FROM users WHERE userid = $1`,
                 [userid]
             );
             console.log('TutorData:', tutorData);
