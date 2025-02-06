@@ -189,7 +189,7 @@ module.exports = (pool) => {
         try {
             // Check if the verification code exists and is valid
             const codeResult = await pool.query(
-                `SELECT * FROM VerificationCode WHERE code = $1 AND expirationAt > NOW() AND used = FALSE`,
+                `SELECT schoolID FROM VerificationCode WHERE code = $1 AND expirationAt > NOW() AND used = FALSE`,
                 [verificationCode]
             );
 
