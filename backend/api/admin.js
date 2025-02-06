@@ -40,6 +40,7 @@ module.exports = (pool) => {
 
         try {
             // Check the last generated time for the school
+            /*
             const lastGenResult = await pool.query(
                 'SELECT MAX(createdAt) AS lastGeneratedAt FROM VerificationCode WHERE schoolID = $1',
                 [schoolID]
@@ -54,6 +55,7 @@ module.exports = (pool) => {
                     return res.status(429).json({ message: 'You can only generate a new code every 30 minutes.' });
                 }
             }
+            */
 
             // Insert new verification code
             await pool.query(
