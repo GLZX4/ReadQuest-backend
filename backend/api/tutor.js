@@ -26,26 +26,33 @@ module.exports = (pool) => {
     // fetch tutor Data(just schoolid for now)
     router.get('/fetch-Tutor-Data', verifyToken, async (req, res) => {
         const { userid } = req.query;
-
+    
         if (!userid) {
             return res.status(400).json({ message: 'Tutor ID is required' });
         }
-
+    
         try {
             const tutorData = await pool.query(
-                `SELECT schoolid FROM users WHERE userid = $1`,
+                `SELECT s.schoolCode 
+                 FROM Users u 
+                 JOIN Schools s ON u.schoolID = s.schoolID 
+                 WHERE u.userID = $1`,
                 [userid]
             );
-            console.log('TutorData:', tutorData);
+    
+            console.log('TutorData:', tutorData.rows);
+    
             if (tutorData.rows.length === 0) {
-                return res.status(404).json({ message: 'Tutor not found' });
+                return res.status(404).json({ message: 'Tutor not found or school not assigned' });
             }
-            res.json(tutorData.rows[0]);
+    
+            res.json({ schoolCode: tutorData.rows[0].schoolcode }); // Send schoolCode in response
         } catch (error) {
-            console.error('Error fetching tutor data:', error);
-            res.status(500).json({ message: 'Error fetching tutor data' });
+            console.error('Error fetching tutor school code:', error);
+            res.status(500).json({ message: 'Error fetching tutor school code' });
         }
     });
+    
 
     // Get student list for a tutor
     router.get('/studentsList', verifyToken, async (req, res) => {
