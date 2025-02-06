@@ -189,16 +189,20 @@ module.exports = (pool) => {
         try {
             // Check if the verification code exists and is valid
             const codeResult = await pool.query(
-                `SELECT schoolID FROM VerificationCode WHERE code = $1 AND expirationAt > NOW() AND used = FALSE`,
+                `SELECT * FROM VerificationCode WHERE code = $1 AND expirationAt > NOW() AND used = FALSE`,
                 [verificationCode]
             );
+            console.log('Code Result:', codeResult.rows);
 
             if (codeResult.rows.length === 0) {
                 return res.status(400).json({ message: 'Invalid or expired verification code.' });
             }
 
-            const { schoolID } = codeResult.rows[0]; // Retrieve associated school ID
+            console.log('retreived result:', codeResult);
 
+            const { schoolID } = codeResult.rows[0].schoolID; // Retrieve associated school ID
+
+            console.log('School ID:', schoolID);
             // Check if the tutor role exists
             let roleResult = await pool.query('SELECT roleID FROM role WHERE Role = $1', ['tutor']);
             let roleID;
