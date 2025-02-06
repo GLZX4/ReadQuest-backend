@@ -23,6 +23,30 @@ module.exports = (pool) => {
         res.json(mockTutorData);
     });
 
+    // fetch tutor Data(just schoolid for now)
+    router.get('/fetchTutorData', verifyToken, async (req, res) => {
+        const { userid } = req.query;
+
+        if (!userid) {
+            return res.status(400).json({ message: 'Tutor ID is required' });
+        }
+
+        try {
+            const tutorData = await pool.query(
+                `SELECT schoolid FROM Tutors WHERE userid = $1`,
+                [userid]
+            );
+            console.log('TutorData:', tutorData);
+            if (tutorData.rows.length === 0) {
+                return res.status(404).json({ message: 'Tutor not found' });
+            }
+            res.json(tutorData.rows[0]);
+        } catch (error) {
+            console.error('Error fetching tutor data:', error);
+            res.status(500).json({ message: 'Error fetching tutor data' });
+        }
+    });
+
     // Get student list for a tutor
     router.get('/studentsList', verifyToken, async (req, res) => {
         const { tutorID } = req.query;
