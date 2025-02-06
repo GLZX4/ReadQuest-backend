@@ -200,7 +200,7 @@ module.exports = (pool) => {
 
             console.log('retreived result:', codeResult);
 
-            const { schoolID } = codeResult.rows[0].schoolID; // Retrieve associated school ID
+            const { schoolID } = codeResult.rows[0].schoolid; // Retrieve associated school ID
 
             console.log('School ID:', schoolID);
             // Check if the tutor role exists
