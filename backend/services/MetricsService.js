@@ -1,5 +1,3 @@
-// Services/MetricsService.js
-
 /**
  * Calculates performance metrics for a student based on their activity during a round.
  * @param {Object} stats - The raw data from the round.
@@ -25,19 +23,16 @@ function calculateMetrics(stats) {
     const averageAnswerTime = totalQuestions > 0 ? totalAnswerTime / totalQuestions : 0;
     const attemptsPerQuestion = totalQuestions > 0 ? totalAttempts / totalQuestions : 0;
     const completionRate = totalRoundsAvailable > 0 ? (roundsPlayed / totalRoundsAvailable) * 100 : 0;
-    const consistency = "stable"; // Placeholder; implement actual logic if needed
 
     return {
         accuracyRate: parseFloat(accuracyRate.toFixed(2)),
         averageAnswerTime: parseFloat(averageAnswerTime.toFixed(2)),
         attemptsPerQuestion: parseFloat(attemptsPerQuestion.toFixed(2)),
-        consistency,
         completionRate: parseFloat(completionRate.toFixed(2)),
     };
 }
 
 module.exports = { calculateMetrics };
-
 
 /**
  * Calculates the recommended difficulty level based on performance metrics.
@@ -49,23 +44,20 @@ function calculateDifficultyLevel(metrics) {
         accuracyRate,
         averageAnswerTime,
         attemptsPerQuestion,
-        consistency,
         completionRate,
     } = metrics;
 
     const weights = {
-        accuracyRate: 0.4,
+        accuracyRate: 0.5,
         averageAnswerTime: 0.3,
-        attemptsPerQuestion: 0.15,
-        consistency: 0.05,
-        completionRate: 0.05,
+        attemptsPerQuestion: 0.1,
+        completionRate: 0.1,
     };
 
     const normalizedMetrics = {
         accuracyRate: accuracyRate / 100,
         averageAnswerTime: Math.max(1 - averageAnswerTime / 20, 0),
         attemptsPerQuestion: Math.max(1 - attemptsPerQuestion / 5, 0),
-        consistency: consistency === 'improving' ? 1 : consistency === 'stable' ? 0.5 : 0,
         completionRate: completionRate / 100,
     };
 
@@ -73,7 +65,6 @@ function calculateDifficultyLevel(metrics) {
         normalizedMetrics.accuracyRate * weights.accuracyRate +
         normalizedMetrics.averageAnswerTime * weights.averageAnswerTime +
         normalizedMetrics.attemptsPerQuestion * weights.attemptsPerQuestion +
-        normalizedMetrics.consistency * weights.consistency +
         normalizedMetrics.completionRate * weights.completionRate;
 
     let recommendedDifficulty;
@@ -102,7 +93,6 @@ const addDefaultMetrics = async (pool, userID) => {
         accuracyRate: 0.0,
         attemptsPerQuestion: 0.0,
         difficultyLevel: 'medium', // Default difficulty
-        consistencyScore: 0.0,
         completionRate: 0.0,
     };
 
@@ -115,10 +105,9 @@ const addDefaultMetrics = async (pool, userID) => {
                 accuracyRate, 
                 attemptsPerQuestion, 
                 difficultyLevel, 
-                consistencyScore, 
                 completionRate, 
                 lastUpdated
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
             [
                 userID,
                 defaultMetrics.totalRoundsPlayed,
@@ -126,7 +115,6 @@ const addDefaultMetrics = async (pool, userID) => {
                 defaultMetrics.accuracyRate,
                 defaultMetrics.attemptsPerQuestion,
                 defaultMetrics.difficultyLevel,
-                defaultMetrics.consistencyScore,
                 defaultMetrics.completionRate,
             ]
         );
@@ -138,4 +126,3 @@ const addDefaultMetrics = async (pool, userID) => {
 };
 
 module.exports = { calculateMetrics, calculateDifficultyLevel, addDefaultMetrics };
-
