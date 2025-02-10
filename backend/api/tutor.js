@@ -103,72 +103,59 @@ module.exports = (pool) => {
         }
     });
 
-    const express = require('express');
-    const router = express.Router();
-    
-    module.exports = (pool) => {
-      /**
-       * Endpoint to add a new question set
-       * @route POST /tutor/add-Question-Set
-       * @body {string} name - Name of the question set.
-       * @body {Array} questions - Array of questions with type and data.
-       * @returns {Object} Response with success message or error.
-       */
-      router.post('/tutor/add-Question-Set', async (req, res) => {
-        const { name, questions } = req.body;
-    
-        if (!name || !questions || !Array.isArray(questions) || questions.length === 0) {
-          return res
-            .status(400)
-            .json({ message: 'Question set name and questions are required and cannot be empty.' });
-        }
-    
-        try {
-          // Insert a new question bank
-          const questionBankResult = await pool.query(
-            `INSERT INTO questionbank (name, createdAt) VALUES ($1, NOW()) RETURNING qbankid`,
-            [name]
-          );
-    
-          const qbankid = questionBankResult.rows[0].qbankid;
-    
-          // Prepare bulk insert values for questions
-          const questionInsertValues = [];
-          const placeholders = [];
-    
-          questions.forEach((question, index) => {
-            const questionNumber = index + 1;
-            questionInsertValues.push(
-              qbankid, // Foreign key
-              question.data.questionText || '', // Question text
-              question.type, // Question type
-              JSON.stringify(question.data.options || []), // Options (JSON format)
-              question.data.correctAnswer || '', // Correct answer
-              JSON.stringify(question.data.additionalData || {}) // Additional metadata
-            );
-    
-            const baseIndex = questionInsertValues.length - 6;
-            placeholders.push(
-              `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6})`
-            );
-          });
-    
-          // Insert questions into the database
-          const query = `
-            INSERT INTO questions (qbankid, questionText, questionType, answerOptions, correctAnswer, additionalData)
-            VALUES ${placeholders.join(', ')}
-          `;
-          await pool.query(query, questionInsertValues);
-    
-          res.status(201).json({ message: 'Question set added successfully.' });
-        } catch (error) {
-          console.error('Error adding question set:', error);
-          res.status(500).json({ message: 'Error adding question set.' });
-        }
-      });
-    
-      return router;
-    };
-    
+    // Add a new question set
+    router.post('/tutor/add-Question-Set', async (req, res) => {
+    const { name, questions } = req.body;
+
+    if (!name || !questions || !Array.isArray(questions) || questions.length === 0) {
+        return res
+        .status(400)
+        .json({ message: 'Question set name and questions are required and cannot be empty.' });
+    }
+
+    try {
+        // Insert a new question bank
+        const questionBankResult = await pool.query(
+        `INSERT INTO questionbank (name, createdAt) VALUES ($1, NOW()) RETURNING qbankid`,
+        [name]
+        );
+
+        const qbankid = questionBankResult.rows[0].qbankid;
+
+        // Prepare bulk insert values for questions
+        const questionInsertValues = [];
+        const placeholders = [];
+
+        questions.forEach((question, index) => {
+        const questionNumber = index + 1;
+        questionInsertValues.push(
+            qbankid, // Foreign key
+            question.data.questionText || '', // Question text
+            question.type, // Question type
+            JSON.stringify(question.data.options || []), // Options (JSON format)
+            question.data.correctAnswer || '', // Correct answer
+            JSON.stringify(question.data.additionalData || {}) // Additional metadata
+        );
+
+        const baseIndex = questionInsertValues.length - 6;
+        placeholders.push(
+            `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6})`
+        );
+        });
+
+        // Insert questions into the database
+        const query = `
+        INSERT INTO questions (qbankid, questionText, questionType, answerOptions, correctAnswer, additionalData)
+        VALUES ${placeholders.join(', ')}
+        `;
+        await pool.query(query, questionInsertValues);
+
+        res.status(201).json({ message: 'Question set added successfully.' });
+    } catch (error) {
+        console.error('Error adding question set:', error);
+        res.status(500).json({ message: 'Error adding question set.' });
+    }
+    });
+
     return router;
-}
+};
