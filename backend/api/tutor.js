@@ -104,39 +104,68 @@ module.exports = (pool) => {
     });
 
     // Add a new question set
-    router.post('/add-Question-Set', async (req, res) => {
+    router.post('/add-Question-Set', verifyToken, async (req, res) => {
         console.log('Received request at /add-Question-Set');
         console.log('Request body:', req.body);
       
+        const { questions, questionType, tutorID } = req.body;
+      
+        if (!questions || questions.length === 0) {
+          return res.status(400).json({ message: 'No questions provided' });
+        }
+      
+        const client = await pool.connect();
         try {
-          const { questions, questionType } = req.body;
+          await client.query('BEGIN'); // Start transaction
       
-          if (!questions || !Array.isArray(questions) || questions.length === 0) {
-            return res.status(400).json({ message: "Invalid question data" });
-          }
-      
-          // Example: Saving questions (Assuming your DB schema uses `questionbank` for storing sets)
-          const questionBankInsert = await pool.query(
+          // Step 1: Insert into questionbank (if needed)
+          const questionBankRes = await client.query(
             `INSERT INTO questionbank (name, createdat) VALUES ($1, NOW()) RETURNING qbankid`,
             [`${questionType} Set`]
           );
-          const qbankid = questionBankInsert.rows[0].qbankid;
+          const qbankid = questionBankRes.rows[0].qbankid;
       
-          // Insert each question
-          for (const question of questions) {
-            await pool.query(
-              `INSERT INTO questions (qbankid, questiontext, questiontype, answeroptions, correctanswer) 
-               VALUES ($1, $2, $3, $4, $5)`,
-              [qbankid, question.questionText, question.questionType, JSON.stringify(question.answerOptions), question.correctAnswer]
+          // Step 2: Insert questions
+          const questionInsertPromises = questions.map(async (q) => {
+            return client.query(
+              `INSERT INTO questions (qbankid, questiontext, questiontype, answeroptions, correctanswer, additionaldata) 
+               VALUES ($1, $2, $3, $4, $5, $6) RETURNING questionid`,
+              [qbankid, q.questionText, q.questionType, JSON.stringify(q.answerOptions), q.correctAnswer, JSON.stringify(q.additionalData || {})]
             );
-          }
+          });
       
-          res.status(201).json({ message: "Question Set Published Successfully!" });
+          const insertedQuestions = await Promise.all(questionInsertPromises);
+      
+          // Step 3: Insert into rounds
+          const roundRes = await client.query(
+            `INSERT INTO rounds (userid, qbankid, status, difficultyLevel, createdat) 
+             VALUES ($1, $2, 'active', 'medium', NOW()) RETURNING roundid`,
+            [tutorID, qbankid]
+          );
+          const roundid = roundRes.rows[0].roundid;
+      
+          // Step 4: Insert into roundassociation (if needed)
+          const roundAssociationPromises = insertedQuestions.map((qRes) => {
+            return client.query(
+              `INSERT INTO roundassociation (userid, roundid, status, completedat) VALUES ($1, $2, 'pending', NULL)`,
+              [tutorID, roundid]
+            );
+          });
+      
+          await Promise.all(roundAssociationPromises);
+      
+          await client.query('COMMIT'); // Commit transaction
+          res.status(200).json({ message: 'Question set and round added successfully', qbankid, roundid });
+      
         } catch (error) {
-          console.error("Error adding question set:", error);
-          res.status(500).json({ message: "Internal server error" });
+          await client.query('ROLLBACK'); // Rollback transaction on error
+          console.error('Error adding question set:', error);
+          res.status(500).json({ message: 'Error adding question set' });
+        } finally {
+          client.release();
         }
       });
+      
       
 
     return router;
