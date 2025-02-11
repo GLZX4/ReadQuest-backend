@@ -139,9 +139,9 @@ module.exports = (pool) => {
           // Step 3: Insert into rounds
           const roundRes = await client.query(
             `INSERT INTO rounds (userid, qbankid, status, difficultyLevel, createdat) 
-             VALUES ($1, $2, 'active', 'medium', NOW()) RETURNING roundid`,
+             VALUES ($1, $2, 'incomplete', 'medium', NOW()) RETURNING roundid`,
             [tutorID, qbankid]
-          );
+         );         
           const roundid = roundRes.rows[0].roundid;
       
           // Step 4: Insert into roundassociation (if needed)
