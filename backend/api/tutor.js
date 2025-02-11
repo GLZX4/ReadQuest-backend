@@ -105,7 +105,7 @@ module.exports = (pool) => {
 
     // Add a new question set
     router.post('/tutor/add-Question-Set', async (req, res) => {
-    const { name, questions } = req.body;
+    const { questions, questionType } = req.body;
 
     if (!name || !questions || !Array.isArray(questions) || questions.length === 0) {
         return res
