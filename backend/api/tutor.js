@@ -162,10 +162,12 @@ module.exports = (pool) => {
             // Insert into roundassociation
             const roundAssociationPromises = insertedQuestions.map((qRes) => {
                 return client.query(
-                    `INSERT INTO roundassociation (userid, roundid, status, completedat) VALUES ($1, $2, 'pending', NULL)`,
-                    [tutorID, roundid]
+                  `INSERT INTO roundassociation (userid, roundid, status, completedat) 
+                   VALUES ($1, $2, 'incomplete', NULL)`, // Change 'pending' to 'incomplete'
+                  [tutorID, roundid]
                 );
-            });
+              });
+              
     
             await Promise.all(roundAssociationPromises);
             console.log("✅ Inserted into roundassociation");
