@@ -105,66 +105,76 @@ module.exports = (pool) => {
 
     // Add a new question set
     router.post('/add-Question-Set', verifyToken, async (req, res) => {
-        console.log('Received request at /add-Question-Set');
-        console.log('Request body:', req.body);
-      
+        console.log('✅ Received request at /add-Question-Set');
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
         const { questions, questionType, tutorID } = req.body;
-      
+    
         if (!questions || questions.length === 0) {
-          return res.status(400).json({ message: 'No questions provided' });
+            return res.status(400).json({ message: 'No questions provided' });
         }
-      
+    
         const client = await pool.connect();
         try {
-          await client.query('BEGIN'); // Start transaction
-      
-          // Step 1: Insert into questionbank (if needed)
-          const questionBankRes = await client.query(
-            `INSERT INTO questionbank (name, createdat) VALUES ($1, NOW()) RETURNING qbankid`,
-            [`${questionType} Set`]
-          );
-          const qbankid = questionBankRes.rows[0].qbankid;
-      
-          // Step 2: Insert questions
-          const questionInsertPromises = questions.map(async (q) => {
-            return client.query(
-              `INSERT INTO questions (qbankid, questiontext, questiontype, answeroptions, correctanswer, additionaldata) 
-               VALUES ($1, $2, $3, $4, $5, $6) RETURNING questionid`,
-              [qbankid, q.questionText, q.questionType, JSON.stringify(q.answerOptions), q.correctAnswer, JSON.stringify(q.additionalData || {})]
+            await client.query('BEGIN');
+            console.log("🔹 Transaction started");
+    
+            // Insert into questionbank
+            const questionBankRes = await client.query(
+                `INSERT INTO questionbank (name, createdat) VALUES ($1, NOW()) RETURNING qbankid`,
+                [`${questionType} Set`]
             );
-          });
-      
-          const insertedQuestions = await Promise.all(questionInsertPromises);
-      
-          // Step 3: Insert into rounds
-          const roundRes = await client.query(
-            `INSERT INTO rounds (userid, qbankid, status, difficultyLevel, createdat) 
-             VALUES ($1, $2, 'incomplete', 'medium', NOW()) RETURNING roundid`,
-            [tutorID, qbankid]
-         );         
-          const roundid = roundRes.rows[0].roundid;
-      
-          // Step 4: Insert into roundassociation (if needed)
-          const roundAssociationPromises = insertedQuestions.map((qRes) => {
-            return client.query(
-              `INSERT INTO roundassociation (userid, roundid, status, completedat) VALUES ($1, $2, 'pending', NULL)`,
-              [tutorID, roundid]
+            const qbankid = questionBankRes.rows[0].qbankid;
+            console.log(`✅ Inserted question bank: ${qbankid}`);
+    
+            // Insert questions
+            const questionInsertPromises = questions.map(async (q) => {
+                console.log(`📌 Inserting question:`, q);
+                return client.query(
+                    `INSERT INTO questions (qbankid, questiontext, questiontype, answeroptions, correctanswer, additionaldata) 
+                    VALUES ($1, $2, $3, $4, $5, $6) RETURNING questionid`,
+                    [qbankid, q.questionText, q.questionType, JSON.stringify(q.answerOptions), q.correctAnswer, JSON.stringify(q.additionalData || {})]
+                );
+            });
+    
+            const insertedQuestions = await Promise.all(questionInsertPromises);
+            console.log(`✅ Inserted ${insertedQuestions.length} questions`);
+    
+            // Insert into rounds
+            const roundRes = await client.query(
+                `INSERT INTO rounds (userid, qbankid, status, difficultyLevel, createdat) 
+                VALUES ($1, $2, 'incomplete', 'medium', NOW()) RETURNING roundid`,
+                [tutorID, qbankid]
             );
-          });
-      
-          await Promise.all(roundAssociationPromises);
-      
-          await client.query('COMMIT'); // Commit transaction
-          res.status(200).json({ message: 'Question set and round added successfully', qbankid, roundid });
-      
+            const roundid = roundRes.rows[0].roundid;
+            console.log(`✅ Inserted round: ${roundid}`);
+    
+            // Insert into roundassociation
+            const roundAssociationPromises = insertedQuestions.map((qRes) => {
+                return client.query(
+                    `INSERT INTO roundassociation (userid, roundid, status, completedat) VALUES ($1, $2, 'pending', NULL)`,
+                    [tutorID, roundid]
+                );
+            });
+    
+            await Promise.all(roundAssociationPromises);
+            console.log("✅ Inserted into roundassociation");
+    
+            await client.query('COMMIT');
+            console.log("✅ Transaction committed successfully");
+    
+            res.status(200).json({ message: 'Question set and round added successfully', qbankid, roundid });
+    
         } catch (error) {
-          await client.query('ROLLBACK'); // Rollback transaction on error
-          console.error('Error adding question set:', error);
-          res.status(500).json({ message: 'Error adding question set' });
+            await client.query('ROLLBACK');
+            console.error('❌ Error adding question set:', error);
+            res.status(500).json({ message: 'Error adding question set' });
         } finally {
-          client.release();
+            client.release();
+            console.log("🔹 Connection released");
         }
-      });
+    });
+    
       
       
 
