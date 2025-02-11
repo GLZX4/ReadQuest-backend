@@ -17,12 +17,22 @@ module.exports = (pool) => {
         ],
     };
 
-    // Get tutor data
+    //List all endpoint data
     router.get('/', (req, res) => {
-        // In a real app, fetch this data from the database using the tutor's ID
-        res.json(mockTutorData);
+        // List all available endpoints in this router
+        const availableRoutes = router.stack
+            .filter(r => r.route) // Filter out middleware
+            .map(r => ({
+                method: Object.keys(r.route.methods)[0].toUpperCase(),
+                path: `/api/tutor${r.route.path}`
+            }));
+    
+        res.json({
+            message: "Available Tutor API Endpoints",
+            endpoints: availableRoutes
+        });
     });
-
+    
     // fetch tutor Data(just schoolid for now)
     router.get('/fetch-Tutor-Data', verifyToken, async (req, res) => {
         const { userid } = req.query;
