@@ -147,7 +147,8 @@ router.post('/add-Question-Set', verifyToken, async (req, res) => {
             return client.query(
                 `INSERT INTO questions (qbankid, questiontext, questiontype, answeroptions, correctanswer, additionaldata) 
                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING questionid`,
-                [qbankid, q.questionText, q.questionType, JSON.stringify(q.answerOptions), q.correctAnswer, JSON.stringify(q.additionalData || {})]
+                [qbankid, q.questionText, q.questionType, JSON.stringify(q.answerOptions), JSON.stringify({ correct: q.correctAnswer }), JSON.stringify(q.additionalData || {})]
+
             );
         });
 
