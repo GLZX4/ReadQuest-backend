@@ -76,6 +76,7 @@ module.exports = (pool) => {
                  OFFSET $2 LIMIT 1`,
                 [qBankID, questionIndex]
             );
+            console.log('Question to return:', result.rows);
     
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Question not found' });
