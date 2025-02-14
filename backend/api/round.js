@@ -69,7 +69,7 @@ module.exports = (pool) => {
     
         try {
             const result = await pool.query(
-                `SELECT questionID, questionText, questionType, answerOptions, additionalData
+                `SELECT questionid, questiontext, questiontype, answerOptions, additionalData
                  FROM Questions
                  WHERE qBankID = $1
                  ORDER BY questionID
@@ -103,7 +103,7 @@ module.exports = (pool) => {
     
         try {
             const result = await pool.query(
-                'SELECT QuestionType, CorrectAnswer FROM QuestionBank WHERE QuestionID = $1',
+                'SELECT questiontype, correctanswer FROM questions WHERE QuestionID = $1',
                 [questionID]
             );
     
