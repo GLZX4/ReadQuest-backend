@@ -120,11 +120,11 @@ module.exports = (pool) => {
             let isCorrect = false;
     
             switch (questiontype) {
-                case 'multiple_choice':
+                case 'multipleChoice':
                     isCorrect = selectedAnswer === correctanswer;
                     break;
     
-                case 'drag_drop':
+                case 'dragDrop':
                     try {
                         const correctAnswerObj = JSON.parse(correctanswer);
                         const selectedAnswerObj = JSON.parse(selectedAnswer);
@@ -135,7 +135,7 @@ module.exports = (pool) => {
                     }
                     break;
     
-                case 'sentence_reorder':
+                case 'sentenceReorder':
                     try {
                         const correctOrder = JSON.parse(correctanswer);
                         const selectedOrder = JSON.parse(selectedAnswer);
