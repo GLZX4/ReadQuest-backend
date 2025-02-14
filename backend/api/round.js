@@ -7,7 +7,7 @@ module.exports = (pool) => {
 
     // Select a round by difficulty and return roundID and qBankID
     router.get('/select-by-difficulty', verifyToken, async (req, res) => {
-        const { difficultyLevel } = req.query.difficulty;
+        const difficultyLevel = req.query.difficulty;
         console.log('recevied request for selecting round by difficulty:', difficultyLevel);
     
         if (!difficultyLevel) {
