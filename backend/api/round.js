@@ -69,7 +69,7 @@ module.exports = (pool) => {
     
         try {
             const result = await pool.query(
-                `SELECT questionID, questionText, questionType, answerOptions, correctAnswer, additionalData
+                `SELECT questionID, questionText, questionType, answerOptions, additionalData
                  FROM Questions
                  WHERE qBankID = $1
                  ORDER BY questionID
