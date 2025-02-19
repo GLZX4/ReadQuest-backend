@@ -17,7 +17,7 @@ module.exports = (pool) => {
             // Step 2: Store updated metrics in DB
             await pool.query(
                 `UPDATE performanceMetrics 
-                 SET accuracyRate = $1, totalAnswerTime = $2, totalAttempts = $3, completionRate = $4
+                 SET accuracyrate = $1, averageanswertime = $2, totalattempts = $3, completionrate = $4, lastupdated = NOW()
                  WHERE userID = $5`,
                 [metrics.accuracyRate, metrics.totalAnswerTime, metrics.totalAttempts, metrics.completionRate, req.body.userID]
             );
