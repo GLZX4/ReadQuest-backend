@@ -4,79 +4,126 @@ const { calculateMetrics, calculateDifficultyLevel } = require('../services/Metr
 const router = express.Router();
 
 module.exports = (pool) => {
-
     // Process metrics
-    router.post('/process-metrics', async (req, res) => {
-        console.log('📊 Processing metrics:', req.body);
+router.post('/process-metrics', async (req, res) => {
+    console.log('📊 Processing metrics:', req.body);
 
-        const userID = parseInt(req.body.userID, 10); // Ensure userID is an integer
-        const metrics = calculateMetrics(req.body);
-        const newUserDifficulty = calculateDifficultyLevel(metrics);
-        console.log('variable type:', typeof userID);
+    // Extract and explicitly convert values
+    const userID = Number(req.body.userID); // Ensure Integer
+    const metrics = calculateMetrics(req.body);
+    const newUserDifficulty = String(calculateDifficultyLevel(metrics)); // Ensure String
 
-        // Queries (No explicit type casting in SQL)
-        const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
-        const updateQuery = `
-            UPDATE performancemetrics
-            SET 
-                totalroundsplayed = $2,
-                averageanswertime = $3,
-                accuracyrate = $4,
-                attemptsperquestion = $5,
-                completionrate = $6,
-                difficultylevel = $7,
-                lastupdated = NOW()
-            WHERE metricid = $8
-            RETURNING *;
-        `;
-        const insertQuery = `
-            INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-            ON CONFLICT (userid) 
-            DO UPDATE SET 
-                totalroundsplayed = EXCLUDED.totalroundsplayed,
-                averageanswertime = EXCLUDED.averageanswertime,
-                accuracyrate = EXCLUDED.accuracyrate,
-                attemptsperquestion = EXCLUDED.attemptsperquestion,
-                completionrate = EXCLUDED.completionrate,
-                difficultylevel = EXCLUDED.difficultylevel,
-                lastupdated = NOW()
-            RETURNING *;
-        `;
+    // Ensure all numeric values are explicitly converted
+    const totalRoundsPlayed = Number.isInteger(metrics.totalRoundsPlayed) ? metrics.totalRoundsPlayed : 0;
+    const averageAnswerTime = Number(metrics.averageAnswerTime) || 0;
+    const accuracyRate = Number(metrics.accuracyRate) || 0;
+    const attemptsPerQuestion = Number(metrics.attemptsPerQuestion) || 0;
+    const completionRate = Number(metrics.completionRate) || 0;
 
-        try {
-            const existing = await pool.query(checkQuery, [userID]);
-
-            if (existing.rows.length > 0) {
-                const updated = await pool.query(updateQuery, [
-                    userID, // Integer
-                    Math.floor(metrics.totalRoundsPlayed || 0), // Ensure INTEGER
-                    parseFloat(metrics.averageAnswerTime || 0), // Ensure FLOAT
-                    parseFloat(metrics.accuracyRate || 0), // Ensure FLOAT
-                    parseFloat(metrics.attemptsPerQuestion || 0), // Ensure FLOAT
-                    parseFloat(metrics.completionRate || 0), // Ensure FLOAT
-                    newUserDifficulty || "medium", // VARCHAR
-                    existing.rows[0].metricid, // Integer (metricid)
-                ]);
-                res.status(200).json({ message: "✅ Metrics updated successfully", data: updated.rows[0] });
-            } else {
-                // Step 3: If not exists, insert a new row
-                const inserted = await pool.query(insertQuery, [
-                    userID, // Integer
-                    Math.floor(metrics.totalRoundsPlayed || 0), // Ensure INTEGER
-                    parseFloat(metrics.averageAnswerTime || 0), // Ensure FLOAT
-                    parseFloat(metrics.accuracyRate || 0), // Ensure FLOAT
-                    parseFloat(metrics.attemptsPerQuestion || 0), // Ensure FLOAT
-                    parseFloat(metrics.completionRate || 0), // Ensure FLOAT
-                    newUserDifficulty || "medium", // VARCHAR
-                ]);
-                res.status(200).json({ message: "✅ Metrics inserted successfully", data: inserted.rows[0] });
-            }
-        } catch (error) {
-            console.error("❌ Error processing metrics:", error);
-            res.status(500).json({ message: "Error processing metrics" });
-        }
+    console.log({
+        userID,
+        totalRoundsPlayed,
+        averageAnswerTime,
+        accuracyRate,
+        attemptsPerQuestion,
+        completionRate,
+        newUserDifficulty
     });
+
+    // Queries (No explicit casting in SQL)
+    const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
+    const upsertQuery = `
+        INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        ON CONFLICT (userid) 
+        DO UPDATE SET 
+            totalroundsplayed = EXCLUDED.totalroundsplayed,
+            averageanswertime = EXCLUDED.averageanswertime,
+            accuracyrate = EXCLUDED.accuracyrate,
+            attemptsperquestion = EXCLUDED.attemptsperquestion,
+            completionrate = EXCLUDED.completionrate,
+            difficultylevel = EXCLUDED.difficultylevel,
+            lastupdated = NOW()
+        RETURNING *;
+    `;
+
+    try {
+        const result = await pool.query(upsertQuery, [
+            userID,
+            totalRoundsPlayed,
+            averageAnswerTime,
+            accuracyRate,
+            attemptsPerQuestion,
+            completionRate,
+            newUserDifficulty,
+        ]);
+        res.status(200).json({ message: "✅ Metrics processed successfully", data: result.rows[0] });
+    } catch (error) {
+        console.error("❌ Error processing metrics:", error);
+        res.status(500).json({ message: "Error processing metrics" });
+    }
+});
+
+        // Process metrics
+        router.post('/process-metrics', async (req, res) => {
+            console.log('📊 Processing metrics:', req.body);
+
+            // Extract and explicitly convert values
+            const userID = Number(req.body.userID); // Ensure Integer
+            const metrics = calculateMetrics(req.body);
+            const newUserDifficulty = String(calculateDifficultyLevel(metrics)); // Ensure String
+
+            // Ensure all numeric values are explicitly converted
+            const totalRoundsPlayed = Number.isInteger(metrics.totalRoundsPlayed) ? metrics.totalRoundsPlayed : 0;
+            const averageAnswerTime = Number(metrics.averageAnswerTime) || 0;
+            const accuracyRate = Number(metrics.accuracyRate) || 0;
+            const attemptsPerQuestion = Number(metrics.attemptsPerQuestion) || 0;
+            const completionRate = Number(metrics.completionRate) || 0;
+
+            console.log({
+                userID,
+                totalRoundsPlayed,
+                averageAnswerTime,
+                accuracyRate,
+                attemptsPerQuestion,
+                completionRate,
+                newUserDifficulty
+            });
+
+            // Queries (No explicit casting in SQL)
+            const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
+            const upsertQuery = `
+                INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                ON CONFLICT (userid) 
+                DO UPDATE SET 
+                    totalroundsplayed = EXCLUDED.totalroundsplayed,
+                    averageanswertime = EXCLUDED.averageanswertime,
+                    accuracyrate = EXCLUDED.accuracyrate,
+                    attemptsperquestion = EXCLUDED.attemptsperquestion,
+                    completionrate = EXCLUDED.completionrate,
+                    difficultylevel = EXCLUDED.difficultylevel,
+                    lastupdated = NOW()
+                RETURNING *;
+            `;
+
+            try {
+                const result = await pool.query(upsertQuery, [
+                    userID,
+                    totalRoundsPlayed,
+                    averageAnswerTime,
+                    accuracyRate,
+                    attemptsPerQuestion,
+                    completionRate,
+                    newUserDifficulty,
+                ]);
+                res.status(200).json({ message: "✅ Metrics processed successfully", data: result.rows[0] });
+            } catch (error) {
+                console.error("❌ Error processing metrics:", error);
+                res.status(500).json({ message: "Error processing metrics" });
+            }
+        });
+
 
 
     return router;
