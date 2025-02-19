@@ -14,23 +14,23 @@ module.exports = (pool) => {
         const newUserDifficulty = calculateDifficultyLevel(metrics);
 
         // Queries
-        const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
+        const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1::int`;
         const updateQuery = `
             UPDATE performancemetrics
             SET 
-                totalroundsplayed = $2,
-                averageanswertime = $3,
-                accuracyrate = $4,
-                attemptsperquestion = $5,
-                completionrate = $6,
-                difficultylevel = $7,
+                totalroundsplayed = $2::int,
+                averageanswertime = $3::numeric,
+                accuracyrate = $4::numeric,
+                attemptsperquestion = $5::numeric,
+                completionrate = $6::numeric,
+                difficultylevel = $7::varchar,
                 lastupdated = NOW()
-            WHERE metricid = $8
+            WHERE metricid = $8::int
             RETURNING *;
         `;
         const insertQuery = `
             INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            VALUES ($1::int, $2::int, $3::numeric, $4::numeric, $5::numeric, $6::numeric, $7::varchar, NOW())
             RETURNING *;
         `;
 
@@ -41,12 +41,12 @@ module.exports = (pool) => {
             if (existing.rows.length > 0) {
                 // Step 2: If exists, update the existing row
                 const updated = await pool.query(updateQuery, [
-                    userID,  // Now it's always an integer
-                    metrics.totalRoundsPlayed || 0,
-                    metrics.averageAnswerTime || 0,
-                    metrics.accuracyRate || 0,
-                    metrics.attemptsPerQuestion || 0,
-                    metrics.completionRate || 0,
+                    userID,
+                    parseInt(metrics.totalRoundsPlayed || 0, 10),
+                    parseFloat(metrics.averageAnswerTime || 0),
+                    parseFloat(metrics.accuracyRate || 0),
+                    parseFloat(metrics.attemptsPerQuestion || 0),
+                    parseFloat(metrics.completionRate || 0),
                     newUserDifficulty || "medium",
                     existing.rows[0].metricid, // Use the existing metricid for update
                 ]);
@@ -54,12 +54,12 @@ module.exports = (pool) => {
             } else {
                 // Step 3: If not exists, insert a new row
                 const inserted = await pool.query(insertQuery, [
-                    userID,  // Ensuring userID is an integer
-                    metrics.totalRoundsPlayed || 0,
-                    metrics.averageAnswerTime || 0,
-                    metrics.accuracyRate || 0,
-                    metrics.attemptsPerQuestion || 0,
-                    metrics.completionRate || 0,
+                    userID,
+                    parseInt(metrics.totalRoundsPlayed || 0, 10),
+                    parseFloat(metrics.averageAnswerTime || 0),
+                    parseFloat(metrics.accuracyRate || 0),
+                    parseFloat(metrics.attemptsPerQuestion || 0),
+                    parseFloat(metrics.completionRate || 0),
                     newUserDifficulty || "medium",
                 ]);
                 res.status(200).json({ message: "✅ Metrics inserted successfully", data: inserted.rows[0] });
