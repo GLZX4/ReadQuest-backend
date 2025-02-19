@@ -12,6 +12,7 @@ module.exports = (pool) => {
         const userID = parseInt(req.body.userID, 10); // Ensure userID is an integer
         const metrics = calculateMetrics(req.body);
         const newUserDifficulty = calculateDifficultyLevel(metrics);
+        console.log('variable type:', typeof userID);
 
         // Queries
         const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1::int`;
