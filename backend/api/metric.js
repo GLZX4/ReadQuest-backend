@@ -8,10 +8,12 @@ module.exports = (pool) => {
     // Process metrics
     router.post('/process-metrics', async (req, res) => {
         console.log('📊 Processing metrics:', req.body);
+
+        const userID = parseInt(req.body.userID, 10); // Ensure userID is an integer
         const metrics = calculateMetrics(req.body);
         const newUserDifficulty = calculateDifficultyLevel(metrics);
-        
-        // Check if the user already has an entry in performancemetrics
+
+        // Queries
         const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
         const updateQuery = `
             UPDATE performancemetrics
@@ -34,12 +36,12 @@ module.exports = (pool) => {
 
         try {
             // Step 1: Check if the user already has an entry
-            const existing = await pool.query(checkQuery, [req.body.userID]);
+            const existing = await pool.query(checkQuery, [userID]);
 
             if (existing.rows.length > 0) {
                 // Step 2: If exists, update the existing row
                 const updated = await pool.query(updateQuery, [
-                    req.body.userID,
+                    userID,  // Now it's always an integer
                     metrics.totalRoundsPlayed || 0,
                     metrics.averageAnswerTime || 0,
                     metrics.accuracyRate || 0,
@@ -52,7 +54,7 @@ module.exports = (pool) => {
             } else {
                 // Step 3: If not exists, insert a new row
                 const inserted = await pool.query(insertQuery, [
-                    req.body.userID,
+                    userID,  // Ensuring userID is an integer
                     metrics.totalRoundsPlayed || 0,
                     metrics.averageAnswerTime || 0,
                     metrics.accuracyRate || 0,
@@ -66,7 +68,6 @@ module.exports = (pool) => {
             console.error("❌ Error processing metrics:", error);
             res.status(500).json({ message: "Error processing metrics" });
         }
-
     });
 
     return router;
