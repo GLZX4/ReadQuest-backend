@@ -1,4 +1,3 @@
-// backend/api/metric.js
 const express = require('express');
 const { calculateMetrics, calculateDifficultyLevel } = require('../services/MetricsService');
 
@@ -6,17 +5,30 @@ const router = express.Router();
 
 module.exports = (pool) => {
 
-    // backend/api/metric.js
-    router.post('/calculate-metrics', (req, res) => {
-        console.log('Calculating metrics for:', req.query);
+    // Process metrics
+    router.post('/process-metrics', async (req, res) => {
+        console.log('Processing metrics:', req.body);
+
         try {
-            const metrics = calculateMetrics(req.query);
+            // Step 1: Calculate Metrics
+            const metrics = calculateMetrics(req.body);
             const newUserDifficulty = calculateDifficultyLevel(metrics);
-            res.json({ metrics, newUserDifficulty });
+
+            // Step 2: Store updated metrics in DB
+            await pool.query(
+                `UPDATE performanceMetrics 
+                 SET accuracyRate = $1, totalAnswerTime = $2, totalAttempts = $3, completionRate = $4
+                 WHERE userID = $5`,
+                [metrics.accuracyRate, metrics.totalAnswerTime, metrics.totalAttempts, metrics.completionRate, req.body.userID]
+            );
+
+            res.status(200).json({ message: '✅ Metrics processed successfully', metrics, newUserDifficulty });
+
         } catch (error) {
-            console.error('Error calculating metrics:', error);
-            res.status(500).json({ message: 'Error calculating metrics' });
+            console.error('❌ Error processing metrics:', error);
+            res.status(500).json({ message: 'Error processing metrics' });
         }
     });
+
     return router;
-}
+};
