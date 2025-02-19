@@ -8,8 +8,10 @@ module.exports = (pool) => {
     // Process metrics
     router.post('/process-metrics', async (req, res) => {
         console.log('📊 Processing metrics:', req.body);
-
-                // Check if the user already has an entry in performancemetrics
+        const metrics = calculateMetrics(req.body);
+        const newUserDifficulty = calculateDifficultyLevel(metrics);
+        
+        // Check if the user already has an entry in performancemetrics
         const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
         const updateQuery = `
             UPDATE performancemetrics
