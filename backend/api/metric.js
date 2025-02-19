@@ -30,16 +30,23 @@ module.exports = (pool) => {
         `;
         const insertQuery = `
             INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
-            VALUES ($1::int, $2::int, $3::numeric, $4::numeric, $5::numeric, $6::numeric, $7::varchar, NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            ON CONFLICT (userid) 
+            DO UPDATE SET 
+                totalroundsplayed = EXCLUDED.totalroundsplayed,
+                averageanswertime = EXCLUDED.averageanswertime,
+                accuracyrate = EXCLUDED.accuracyrate,
+                attemptsperquestion = EXCLUDED.attemptsperquestion,
+                completionrate = EXCLUDED.completionrate,
+                difficultylevel = EXCLUDED.difficultylevel,
+                lastupdated = NOW()
             RETURNING *;
         `;
 
         try {
-            // Step 1: Check if the user already has an entry
             const existing = await pool.query(checkQuery, [userID]);
-
+ 
             if (existing.rows.length > 0) {
-                // Step 2: If exists, update the existing row
                 const updated = await pool.query(updateQuery, [
                     userID,
                     parseInt(metrics.totalRoundsPlayed || 0, 10),
