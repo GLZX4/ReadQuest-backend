@@ -38,48 +38,54 @@ module.exports = (pool) => {
     });
 
 
-// Fetch achievements for a specific student
-router.get('/fetch-achievements', async (req, res) => {
-    const { studentId } = req.query;
+    // Fetch achievements for a specific student
+    router.get('/fetch-achievements', async (req, res) => {
+        const { studentId } = req.query;
 
-    if (!studentId) {
-        return res.status(400).json({ message: 'Student ID is required' });
-    }
+        if (!studentId) {
+            return res.status(400).json({ message: 'Student ID is required' });
+        }
 
-    try {
-        const allAchievements = await pool.query(`SELECT * FROM achievements_list`); // Assuming this stores all possible achievements
-        
-        const studentAchievements = await pool.query(
-            `SELECT * FROM achievements WHERE userID = $1`,
-            [studentId]
-        );
+        try {
+            // Fetch all achievements, along with student-specific progress
+            const query = `
+                SELECT 
+                    a.achievementid, 
+                    a.achievementtype, 
+                    a.description, 
+                    sa.progress, 
+                    COALESCE(sa.isunlocked, FALSE) AS isunlocked, 
+                    sa.unlockedat
+                FROM achievements a
+                LEFT JOIN student_achievements sa 
+                    ON a.achievementid = sa.achievementid AND sa.userid = $1
+            `;
 
-        const studentAchievementMap = new Map(studentAchievements.rows.map(a => [a.achievementtype, a]));
+            const { rows } = await pool.query(query, [studentId]);
 
-        const combinedAchievements = allAchievements.rows.map(achievement => {
-            const studentAchievement = studentAchievementMap.get(achievement.achievementtype) || {}; // Default if not unlocked
-            const progressData = studentAchievement.progress || {}; // Progress stored as JSONB
-            const isUnlocked = studentAchievement.isunlocked || false;
-            const unlockedAt = studentAchievement.unlockedat || null;
-            const progressPercentage = calculateProgress(progressData, achievement.achievementtype);
+            // Process data
+            const combinedAchievements = rows.map(achievement => {
+                const progressData = achievement.progress || {}; // Handle NULL progress
+                const progressPercentage = calculateProgress(progressData, achievement.achievementtype);
 
-            return {
-                achievementId: achievement.achievementid,
-                type: achievement.achievementtype,
-                description: achievement.description,
-                progress: progressData,
-                isUnlocked,
-                unlockedAt,
-                progressPercentage,
-            };
-        });
+                return {
+                    achievementId: achievement.achievementid,
+                    type: achievement.achievementtype,
+                    description: achievement.description,
+                    progress: progressData,
+                    isUnlocked: achievement.isunlocked,
+                    unlockedAt: achievement.unlockedat,
+                    progressPercentage,
+                };
+            });
 
-        res.status(200).json(combinedAchievements);
-    } catch (error) {
-        console.error('Error fetching achievements:', error);
-        res.status(500).json({ message: 'Error fetching achievements' });
-    }
-});
+            res.status(200).json(combinedAchievements);
+        } catch (error) {
+            console.error('Error fetching achievements:', error);
+            res.status(500).json({ message: 'Error fetching achievements' });
+        }
+    });
+
 
     
     /**
