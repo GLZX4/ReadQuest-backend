@@ -68,6 +68,7 @@ router.get("/get-streak", async (req, res) => {
 
 router.post("/update-streak", async (req, res) => {
     const { userID } = req.body;
+    console.log('Entered update-streak for: ', userID);
     if (!userID) {
         return res.status(400).json({ message: "User ID is required" });
     }
