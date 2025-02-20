@@ -41,66 +41,52 @@ module.exports = (pool) => {
     // Fetch achievements for a specific student
     router.get('/fetch-achievements', async (req, res) => {
         const { studentId } = req.query;
-        console.log('🏆 Fetching achievements for student:', studentId);
 
         if (!studentId) {
             return res.status(400).json({ message: 'Student ID is required' });
         }
 
         try {
-            // Fetch all achievements, along with student-specific progress
             const query = `
                 SELECT 
                     a.achievementid, 
                     a.achievementtype, 
-                    a.description, 
-                    sa.progress, 
-                    COALESCE(sa.isunlocked, FALSE) AS isunlocked, 
+                    a.description,
+                    COALESCE(sa.progress, '{}'::jsonb) AS progress, 
+                    COALESCE(sa.isunlocked, false) AS isunlocked,
                     sa.unlockedat
                 FROM achievements a
                 LEFT JOIN student_achievements sa 
-                    ON a.achievementid = sa.achievementid AND sa.userid = $1
+                ON a.achievementid = sa.achievementid AND sa.userid = $1
             `;
 
-            const { rows } = await pool.query(query, [studentId]);
+            const result = await pool.query(query, [studentId]);
 
-            // Process data
-            const combinedAchievements = rows.map(achievement => {
-                const progressData = achievement.progress || {}; // Handle NULL progress
-                const progressPercentage = calculateProgress(progressData, achievement.achievementtype);
-
-                return {
-                    achievementId: achievement.achievementid,
-                    type: achievement.achievementtype,
-                    description: achievement.description,
-                    progress: progressData,
-                    isUnlocked: achievement.isunlocked,
-                    unlockedAt: achievement.unlockedat,
-                    progressPercentage,
-                };
-            });
-
-            console.log('🏆 Fetched achievements:', combinedAchievements);
+            // Calculate progress percentage for each achievement
+            const combinedAchievements = result.rows.map(achievement => ({
+                achievementId: achievement.achievementid,
+                type: achievement.achievementtype,
+                description: achievement.description,
+                progress: achievement.progress,
+                isUnlocked: achievement.isunlocked,
+                unlockedAt: achievement.unlockedat,
+                progressPercentage: calculateProgress(achievement.progress, achievement.achievementtype),
+            }));
 
             res.status(200).json(combinedAchievements);
         } catch (error) {
-            console.error('Error fetching achievements:', error);
+            console.error('❌ Error fetching achievements:', error);
             res.status(500).json({ message: 'Error fetching achievements' });
         }
     });
 
-
-    
     /**
-     * Helper function to calculate progress percentage
-     * @param {Object} progressData - JSONB progress data from the database
-     * @param {String} achievementType - Achievement type to determine unlock conditions
-     * @returns {Number} Progress percentage (0-100)
+     * Calculates progress percentage for an achievement
      */
     function calculateProgress(progressData, achievementType) {
         let progressValue = 0;
         let unlockConditionValue = 1; // Default to avoid division by 0
-    
+
         switch (achievementType) {
             case 'First Round Completed':
                 progressValue = progressData.roundsCompleted || 0;
@@ -112,7 +98,7 @@ module.exports = (pool) => {
                 break;
             case 'Consistency Champ':
                 progressValue = progressData.consecutiveDays || 0;
-                unlockConditionValue = progressData.targetDays || 5; // Defined in progress JSON
+                unlockConditionValue = progressData.targetDays || 5;
                 break;
             case 'Fast Learner':
                 progressValue = progressData.fastRounds || 0;
@@ -120,19 +106,35 @@ module.exports = (pool) => {
                 break;
             case 'Reading Streak':
                 progressValue = progressData.consecutiveDays || 0;
-                unlockConditionValue = progressData.targetDays || 7; // Defined in progress JSON
+                unlockConditionValue = progressData.targetDays || 7;
                 break;
             case 'All Rounds Perfect':
                 progressValue = progressData.perfectRounds || 0;
-                unlockConditionValue = progressData.targetRounds || 10; // Defined in progress JSON
+                unlockConditionValue = progressData.targetRounds || 10;
+                break;
+            case 'Play 10 Rounds':
+                progressValue = progressData.roundsPlayed || 0;
+                unlockConditionValue = 10;
+                break;
+            case 'Play 50 Rounds':
+                progressValue = progressData.roundsPlayed || 0;
+                unlockConditionValue = 50;
+                break;
+            case 'Play 100 Rounds':
+                progressValue = progressData.roundsPlayed || 0;
+                unlockConditionValue = 100;
+                break;
+            case 'Master Reader':
+                progressValue = progressData.accuracyRate || 0;
+                unlockConditionValue = 95; // 95% accuracy required
                 break;
             default:
                 break;
         }
-    
-        // Calculate percentage and cap at 100%
+
         return Math.round((progressValue / unlockConditionValue) * 100);
     }
+
     
 
 
