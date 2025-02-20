@@ -38,44 +38,49 @@ module.exports = (pool) => {
     });
 
 
-    // Fetch achievements for a specific student
-    router.get('/fetch-achievements', async (req, res) => {
-        const { studentId } = req.query;
-    
-        if (!studentId) {
-            return res.status(400).json({ message: 'Student ID is required' });
-        }
-    
-        try {
-            // Fetch achievements for the student
-            const studentAchievements = await pool.query(
-                `SELECT * FROM achievements WHERE userID = $1`,
-                [studentId]
-            );
-    
-            // Combine and calculate progress
-            const combinedAchievements = studentAchievements.rows.map((achievement) => {
-                const progressData = achievement.progress || {}; // Progress stored as JSONB
-                const isUnlocked = achievement.isunlocked;
-                const unlockedAt = achievement.unlockedat;
-                const progressPercentage = calculateProgress(progressData, achievement.achievementtype);
-    
-                return {
-                    achievementId: achievement.achievementid,
-                    type: achievement.achievementtype,
-                    progress: progressData,
-                    isUnlocked,
-                    unlockedAt,
-                    progressPercentage,
-                };
-            });
-    
-            res.status(200).json(combinedAchievements);
-        } catch (error) {
-            console.error('Error fetching achievements:', error);
-            res.status(500).json({ message: 'Error fetching achievements' });
-        }
-    });
+// Fetch achievements for a specific student
+router.get('/fetch-achievements', async (req, res) => {
+    const { studentId } = req.query;
+
+    if (!studentId) {
+        return res.status(400).json({ message: 'Student ID is required' });
+    }
+
+    try {
+        const allAchievements = await pool.query(`SELECT * FROM achievements_list`); // Assuming this stores all possible achievements
+        
+        const studentAchievements = await pool.query(
+            `SELECT * FROM achievements WHERE userID = $1`,
+            [studentId]
+        );
+
+        const studentAchievementMap = new Map(studentAchievements.rows.map(a => [a.achievementtype, a]));
+
+        const combinedAchievements = allAchievements.rows.map(achievement => {
+            const studentAchievement = studentAchievementMap.get(achievement.achievementtype) || {}; // Default if not unlocked
+            const progressData = studentAchievement.progress || {}; // Progress stored as JSONB
+            const isUnlocked = studentAchievement.isunlocked || false;
+            const unlockedAt = studentAchievement.unlockedat || null;
+            const progressPercentage = calculateProgress(progressData, achievement.achievementtype);
+
+            return {
+                achievementId: achievement.achievementid,
+                type: achievement.achievementtype,
+                description: achievement.description,
+                progress: progressData,
+                isUnlocked,
+                unlockedAt,
+                progressPercentage,
+            };
+        });
+
+        res.status(200).json(combinedAchievements);
+    } catch (error) {
+        console.error('Error fetching achievements:', error);
+        res.status(500).json({ message: 'Error fetching achievements' });
+    }
+});
+
     
     /**
      * Helper function to calculate progress percentage
