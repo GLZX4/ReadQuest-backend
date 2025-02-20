@@ -36,6 +36,85 @@ module.exports = (pool) => {
             res.status(500).json({ message: 'Error fetching completed rounds' });
         }
     });
+
     
+router.get("/get-streak", async (req, res) => {
+    const { studentId } = req.query;
+    if (!studentId) {
+        return res.status(400).json({ message: "Student ID is required" });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT currentstreak, beststreak FROM streaks WHERE userid = $1",
+            [studentId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(200).json({ current: 0, best: 0 }); // Default values
+        }
+
+        res.status(200).json({
+            current: result.rows[0].currentstreak,
+            best: result.rows[0].beststreak
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching streak:", error);
+        res.status(500).json({ message: "Error fetching streak" });
+    }
+});
+
+
+router.post("/update-streak", async (req, res) => {
+    const { userID } = req.body;
+    if (!userID) {
+        return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+    try {
+        const result = await pool.query(
+            "SELECT currentstreak, beststreak, lastactive FROM streaks WHERE userid = $1",
+            [userID]
+        );
+
+        if (result.rows.length === 0) {
+            // First-time entry for this user
+            await pool.query(
+                "INSERT INTO streaks (userid, currentstreak, beststreak, lastactive) VALUES ($1, 1, 1, $2)",
+                [userID, today]
+            );
+            return res.status(200).json({ message: "✅ Streak started!", currentStreak: 1, bestStreak: 1 });
+        }
+
+        const { currentstreak, beststreak, lastactive } = result.rows[0];
+        const lastActiveDate = new Date(lastactive).toISOString().split("T")[0];
+
+        let newStreak = 1;
+        if (lastActiveDate === today) {
+            return res.status(200).json({ message: "✅ Already played today!", currentStreak: currentstreak, bestStreak: beststreak });
+        }
+
+        if (new Date(lastActiveDate).getTime() === new Date(today).getTime() - 86400000) {
+            newStreak = currentstreak + 1; // Continue streak
+        }
+
+        const newBestStreak = Math.max(newStreak, beststreak);
+
+        await pool.query(
+            "UPDATE streaks SET currentstreak = $1, beststreak = $2, lastactive = $3 WHERE userid = $4",
+            [newStreak, newBestStreak, today, userID]
+        );
+
+        res.status(200).json({ message: "✅ Streak updated!", currentStreak: newStreak, bestStreak: newBestStreak });
+
+    } catch (error) {
+        console.error("❌ Error updating streak:", error);
+        res.status(500).json({ message: "Error updating streak" });
+    }
+});
+
     return router;
 }
