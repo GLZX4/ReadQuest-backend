@@ -41,6 +41,7 @@ module.exports = (pool) => {
     // Fetch achievements for a specific student
     router.get('/fetch-achievements', async (req, res) => {
         const { studentId } = req.query;
+        console.log('🏆 Fetching achievements for student:', studentId);
 
         if (!studentId) {
             return res.status(400).json({ message: 'Student ID is required' });
@@ -78,6 +79,8 @@ module.exports = (pool) => {
                     progressPercentage,
                 };
             });
+
+            console.log('🏆 Fetched achievements:', combinedAchievements);
 
             res.status(200).json(combinedAchievements);
         } catch (error) {
