@@ -38,7 +38,7 @@ module.exports = (pool) => {
     });
 
     
-router.get("/get-streak", async (req, res) => {
+router.get("/get-streak", verifyToken, async (req, res) => {
     const { studentId } = req.query;
     if (!studentId) {
         return res.status(400).json({ message: "Student ID is required" });
@@ -66,7 +66,7 @@ router.get("/get-streak", async (req, res) => {
 });
 
 
-router.post("/update-streak", async (req, res) => {
+router.post("/update-streak", verifyToken, async (req, res) => {
     const { studentId } = req.body;
     console.log('Entered update-streak for body: ', req.body);
     console.log('Entered update-streak for variable: ', studentId);
