@@ -112,7 +112,7 @@ module.exports = (pool) => {
      */
     function calculateProgress(progressData, achievementType) {
         let progressValue = 0;
-        let unlockConditionValue = 1; // Default to avoid division by 0
+        let unlockConditionValue = 1; 
 
         switch (achievementType) {
             case 'First Round Completed':

@@ -67,10 +67,10 @@ router.get("/get-streak", async (req, res) => {
 
 
 router.post("/update-streak", async (req, res) => {
-    const { userID } = req.body;
+    const { studentId } = req.body;
     console.log('Entered update-streak for body: ', req.body);
     console.log('Entered update-streak for variable: ', userID);
-    if (!userID) {
+    if (!studentId) {
         return res.status(400).json({ message: "User ID is required" });
     }
 
@@ -79,14 +79,14 @@ router.post("/update-streak", async (req, res) => {
     try {
         const result = await pool.query(
             "SELECT currentstreak, beststreak, lastactive FROM streaks WHERE userid = $1",
-            [userID]
+            [studentId]
         );
 
         if (result.rows.length === 0) {
             // First-time entry for this user
             await pool.query(
                 "INSERT INTO streaks (userid, currentstreak, beststreak, lastactive) VALUES ($1, 1, 1, $2)",
-                [userID, today]
+                [studentId, today]
             );
             return res.status(200).json({ message: "✅ Streak started!", currentStreak: 1, bestStreak: 1 });
         }
@@ -107,7 +107,7 @@ router.post("/update-streak", async (req, res) => {
 
         await pool.query(
             "UPDATE streaks SET currentstreak = $1, beststreak = $2, lastactive = $3 WHERE userid = $4",
-            [newStreak, newBestStreak, today, userID]
+            [newStreak, newBestStreak, today, studentId]
         );
 
         res.status(200).json({ message: "✅ Streak updated!", currentStreak: newStreak, bestStreak: newBestStreak });
