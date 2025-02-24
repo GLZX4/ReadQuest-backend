@@ -48,17 +48,18 @@ function calculateDifficultyLevel(metrics) {
     } = metrics;
 
     const weights = {
-        accuracyRate: 0.5,
+        accuracyRate: 0.4,  // Reduced influence
         averageAnswerTime: 0.3,
-        attemptsPerQuestion: 0.1,
-        completionRate: 0.1,
+        attemptsPerQuestion: 0.15,  // Increased influence
+        completionRate: 0.15, // Increased influence
     };
 
+    // Ensure minimum influence instead of zeroing out
     const normalizedMetrics = {
-        accuracyRate: accuracyRate / 100,
-        averageAnswerTime: Math.max(1 - averageAnswerTime / 20, 0),
-        attemptsPerQuestion: Math.max(1 - attemptsPerQuestion / 5, 0),
-        completionRate: completionRate / 100,
+        accuracyRate: Math.max(accuracyRate / 100, 0.2),  // If accuracy is 0, still get 0.2
+        averageAnswerTime: Math.max(1 - averageAnswerTime / 20, 0.2),
+        attemptsPerQuestion: Math.max(1 - attemptsPerQuestion / 5, 0.2),
+        completionRate: completionRate / 100,  // Already normalized
     };
 
     const performanceScore =
@@ -71,7 +72,7 @@ function calculateDifficultyLevel(metrics) {
     if (performanceScore >= 0.85) {
         recommendedDifficulty = 'easy';
     } else if (performanceScore >= 0.6) {
-        recommendedDifficulty = 'medium';
+        recommendedDifficulty = 'medium'; // <-- Should now be returned
     } else {
         recommendedDifficulty = 'hard';
     }
