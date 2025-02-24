@@ -51,6 +51,10 @@ function calculateDifficultyLevel(metrics) {
         attemptsPerQuestion: Number(metrics.attemptsPerQuestion),
         completionRate: Number(metrics.completionRate),
     };
+    console.log("Type of Accuracy Rate:", typeof accuracyRate);
+    console.log("Type of Average Answer Time:", typeof averageAnswerTime);
+    console.log("Type of Attempts Per Question:", typeof attemptsPerQuestion);
+    console.log("Type of Completion Rate:", typeof completionRate);
 
     console.log("✅ Converted Metrics:", {
         accuracyRate,
