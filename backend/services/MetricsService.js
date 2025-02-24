@@ -45,26 +45,35 @@ function calculateDifficultyLevel(metrics) {
         averageAnswerTime,
         attemptsPerQuestion,
         completionRate,
-    } = metrics;
+    } = {
+        accuracyRate: Number(metrics.accuracyRate),
+        averageAnswerTime: Number(metrics.averageAnswerTime),
+        attemptsPerQuestion: Number(metrics.attemptsPerQuestion),
+        completionRate: Number(metrics.completionRate),
+    };
 
-    console.log("Raw Metrics Received:", metrics);
+    console.log("✅ Converted Metrics:", {
+        accuracyRate,
+        averageAnswerTime,
+        attemptsPerQuestion,
+        completionRate
+    });
 
     const weights = {
-        accuracyRate: 0.4,  
+        accuracyRate: 0.4,
         averageAnswerTime: 0.3,
         attemptsPerQuestion: 0.15,
         completionRate: 0.15,
     };
 
-    // Ensure minimum influence instead of zeroing out
     const normalizedMetrics = {
-        accuracyRate: Math.max(accuracyRate / 100, 0.2),  // Min 0.2 if accuracy is 0
+        accuracyRate: Math.max(accuracyRate / 100, 0.2),
         averageAnswerTime: Math.max(1 - averageAnswerTime / 20, 0.2),
         attemptsPerQuestion: Math.max(1 - attemptsPerQuestion / 5, 0.2),
         completionRate: completionRate / 100,
     };
 
-    console.log("Normalized Metrics:", normalizedMetrics);
+    console.log("🔍 Normalized Metrics:", normalizedMetrics);
 
     const performanceScore =
         normalizedMetrics.accuracyRate * weights.accuracyRate +
@@ -72,7 +81,7 @@ function calculateDifficultyLevel(metrics) {
         normalizedMetrics.attemptsPerQuestion * weights.attemptsPerQuestion +
         normalizedMetrics.completionRate * weights.completionRate;
 
-    console.log(`Performance Score: ${performanceScore.toFixed(2)}`);
+    console.log(`📊 Performance Score: ${performanceScore.toFixed(2)}`);
 
     let recommendedDifficulty;
     if (performanceScore >= 0.85) {
@@ -83,10 +92,11 @@ function calculateDifficultyLevel(metrics) {
         recommendedDifficulty = 'hard';
     }
 
-    console.log(`Recommended Difficulty: ${recommendedDifficulty}`);
-
+    console.log(`✅ Recommended Difficulty: ${recommendedDifficulty}`);
+    
     return recommendedDifficulty;
 }
+
 
 
 module.exports = { calculateMetrics, calculateDifficultyLevel };
