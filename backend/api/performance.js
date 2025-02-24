@@ -11,21 +11,31 @@ module.exports = (pool) => {
     router.get('/students/get-difficulty', verifyToken, async (req, res) => {
         const { userID } = req.query;
         console.log('userID:', userID);
-
+    
         try {
             const result = await pool.query('SELECT * FROM PerformanceMetrics WHERE userID = $1', [userID]);
-            const metrics = result.rows[0];
-
+            let metrics = result.rows[0];
+    
             if (!metrics) {
                 // Default difficulty level if no metrics exist
                 const defaultDifficulty = 'medium';
                 await addDefaultMetrics(pool, userID);
                 return res.status(200).json({ difficulty: defaultDifficulty });
             }
-
+    
             console.log('Calculating difficulty for current metrics: ', metrics);
-
-            const difficulty = calculateDifficultyLevel(metrics);
+    
+            // Ensure all fields have a valid numeric value (replace NULLs)
+            const sanitizedMetrics = {
+                accuracyRate: Number(metrics.accuracyrate) || 0,
+                averageAnswerTime: Number(metrics.averageanswertime) || 0,
+                attemptsPerQuestion: Number(metrics.attemptsperquestion) || 0,
+                completionRate: Number(metrics.completionrate) || 0,
+            };
+    
+            console.log('Sanitized Metrics:', sanitizedMetrics);
+    
+            const difficulty = calculateDifficultyLevel(sanitizedMetrics);
             console.log('Difficulty level calculated:', difficulty);
             res.json({ difficulty: String(difficulty) });
         } catch (error) {
@@ -33,10 +43,9 @@ module.exports = (pool) => {
             res.status(500).json({ message: 'Error getting difficulty level' });
         }
     });
+    
 
-
-
-
+    
     // Get current performance metrics for a specific student
     router.get('/tutor/current-specific-metric/:userID', verifyToken, async (req, res) => {
         const { userID } = req.params;
