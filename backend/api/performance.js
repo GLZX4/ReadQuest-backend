@@ -45,7 +45,7 @@ module.exports = (pool) => {
     });
     
 
-    
+
     // Get current performance metrics for a specific student
     router.get('/tutor/current-specific-metric/:userID', verifyToken, async (req, res) => {
         const { userID } = req.params;
@@ -66,35 +66,34 @@ module.exports = (pool) => {
     });
 
 
-
-
     router.post('/update-metrics', verifyToken, async (req, res) => {
-        const { userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, completionRate } = req.body;
-    
+        const { userID, averageAnswerTime, accuracyRate, completionRate } = req.body;
+
         if (!userID) {
             return res.status(400).json({ message: 'userID is required' });
         }
-    
+
         try {
             await pool.query(
                 `INSERT INTO PerformanceMetrics (userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, completionRate, lastUpdated)
-                 VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-                 ON CONFLICT (userID)
-                 DO UPDATE SET
-                     totalRoundsPlayed = $2,
-                     averageAnswerTime = $3,
-                     accuracyRate = $4,
-                     completionRate = $5,
-                     lastUpdated = CURRENT_TIMESTAMP`,
-                [userID, totalRoundsPlayed, averageAnswerTime, accuracyRate, completionRate]
+                VALUES ($1, 1, $2, $3, $4, CURRENT_TIMESTAMP)
+                ON CONFLICT (userID)
+                DO UPDATE SET
+                    totalRoundsPlayed = PerformanceMetrics.totalRoundsPlayed + 1,
+                    averageAnswerTime = $2,
+                    accuracyRate = $3,
+                    completionRate = $4,
+                    lastUpdated = CURRENT_TIMESTAMP`,
+                [userID, averageAnswerTime, accuracyRate, completionRate]
             );
-    
+
             res.status(200).json({ message: 'Metrics updated successfully' });
         } catch (error) {
             console.error('Error updating metrics:', error);
             res.status(500).json({ message: 'Error updating metrics' });
         }
     });
+
     
     
     return router;
