@@ -47,20 +47,24 @@ function calculateDifficultyLevel(metrics) {
         completionRate,
     } = metrics;
 
+    console.log("Raw Metrics Received:", metrics);
+
     const weights = {
-        accuracyRate: 0.4,  // Reduced influence
+        accuracyRate: 0.4,  
         averageAnswerTime: 0.3,
-        attemptsPerQuestion: 0.15,  // Increased influence
-        completionRate: 0.15, // Increased influence
+        attemptsPerQuestion: 0.15,
+        completionRate: 0.15,
     };
 
     // Ensure minimum influence instead of zeroing out
     const normalizedMetrics = {
-        accuracyRate: Math.max(accuracyRate / 100, 0.2),  // If accuracy is 0, still get 0.2
+        accuracyRate: Math.max(accuracyRate / 100, 0.2),  // Min 0.2 if accuracy is 0
         averageAnswerTime: Math.max(1 - averageAnswerTime / 20, 0.2),
         attemptsPerQuestion: Math.max(1 - attemptsPerQuestion / 5, 0.2),
-        completionRate: completionRate / 100,  // Already normalized
+        completionRate: completionRate / 100,
     };
+
+    console.log("Normalized Metrics:", normalizedMetrics);
 
     const performanceScore =
         normalizedMetrics.accuracyRate * weights.accuracyRate +
@@ -68,17 +72,22 @@ function calculateDifficultyLevel(metrics) {
         normalizedMetrics.attemptsPerQuestion * weights.attemptsPerQuestion +
         normalizedMetrics.completionRate * weights.completionRate;
 
+    console.log(`Performance Score: ${performanceScore.toFixed(2)}`);
+
     let recommendedDifficulty;
     if (performanceScore >= 0.85) {
         recommendedDifficulty = 'easy';
     } else if (performanceScore >= 0.6) {
-        recommendedDifficulty = 'medium'; // <-- Should now be returned
+        recommendedDifficulty = 'medium';
     } else {
         recommendedDifficulty = 'hard';
     }
 
+    console.log(`Recommended Difficulty: ${recommendedDifficulty}`);
+
     return recommendedDifficulty;
 }
+
 
 module.exports = { calculateMetrics, calculateDifficultyLevel };
 
