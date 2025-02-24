@@ -23,7 +23,10 @@ module.exports = (pool) => {
                 return res.status(200).json({ difficulty: defaultDifficulty });
             }
 
+            console.log('Calculating difficulty for current metrics: ', metrics);
+
             const difficulty = calculateDifficultyLevel(metrics);
+            console.log('Difficulty level calculated:', difficulty);
             res.json({ difficulty: String(difficulty) });
         } catch (error) {
             console.error('Error getting difficulty level:', error);
