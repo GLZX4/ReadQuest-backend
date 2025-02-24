@@ -46,22 +46,13 @@ function calculateDifficultyLevel(metrics) {
         attemptsPerQuestion,
         completionRate,
     } = {
-        accuracyRate: Number(metrics.accuracyRate),
-        averageAnswerTime: Number(metrics.averageAnswerTime),
-        attemptsPerQuestion: Number(metrics.attemptsPerQuestion),
-        completionRate: Number(metrics.completionRate),
+        accuracyRate: Number(metrics.accuracyRate) || 0,  // Ensure fallback value
+        averageAnswerTime: Number(metrics.averageAnswerTime) || 0,
+        attemptsPerQuestion: Number(metrics.attemptsPerQuestion) || 0,
+        completionRate: Number(metrics.completionRate) || 0,
     };
-    console.log("Type of Accuracy Rate:", typeof accuracyRate);
-    console.log("Type of Average Answer Time:", typeof averageAnswerTime);
-    console.log("Type of Attempts Per Question:", typeof attemptsPerQuestion);
-    console.log("Type of Completion Rate:", typeof completionRate);
 
-    console.log("✅ Converted Metrics:", {
-        accuracyRate,
-        averageAnswerTime,
-        attemptsPerQuestion,
-        completionRate
-    });
+    console.log("✅ Converted Metrics:", { accuracyRate, averageAnswerTime, attemptsPerQuestion, completionRate });
 
     const weights = {
         accuracyRate: 0.4,
@@ -97,9 +88,10 @@ function calculateDifficultyLevel(metrics) {
     }
 
     console.log(`✅ Recommended Difficulty: ${recommendedDifficulty}`);
-    
+
     return recommendedDifficulty;
 }
+
 
 
 
