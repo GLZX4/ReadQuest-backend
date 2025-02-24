@@ -45,55 +45,47 @@ function calculateDifficultyLevel(metrics) {
         averageAnswerTime,
         attemptsPerQuestion,
         completionRate,
-    } = {
-        accuracyRate: Number(metrics.accuracyRate) || 0,  // Ensure fallback value
-        averageAnswerTime: Number(metrics.averageAnswerTime) || 0,
-        attemptsPerQuestion: Number(metrics.attemptsPerQuestion) || 0,
-        completionRate: Number(metrics.completionRate) || 0,
-    };
+    } = metrics;
 
-    console.log("✅ Converted Metrics:", { accuracyRate, averageAnswerTime, attemptsPerQuestion, completionRate });
+    console.log("✅ Converted Metrics:", metrics);
 
     const weights = {
-        accuracyRate: 0.4,
-        averageAnswerTime: 0.3,
-        attemptsPerQuestion: 0.15,
-        completionRate: 0.15,
+        accuracyRate: 0.5,  // Increase influence of accuracy
+        averageAnswerTime: 0.2,  // Reduce penalty from time
+        attemptsPerQuestion: 0.2,  // Slightly higher weight
+        completionRate: 0.1,  // Keep lower, but still contributing
     };
 
     const normalizedMetrics = {
-        accuracyRate: Math.max(accuracyRate / 100, 0.2),
-        averageAnswerTime: Math.max(1 - averageAnswerTime / 20, 0.2),
-        attemptsPerQuestion: Math.max(1 - attemptsPerQuestion / 5, 0.2),
+        accuracyRate: Math.max(accuracyRate / 100, 0.3),  // Ensure minimum contribution
+        averageAnswerTime: Math.max(1 - (averageAnswerTime / 30), 0.2),  // More forgiving
+        attemptsPerQuestion: Math.max(1 - (attemptsPerQuestion / 3), 0.3),  // More impact from lower attempts
         completionRate: completionRate / 100,
     };
 
     console.log("🔍 Normalized Metrics:", normalizedMetrics);
 
     const performanceScore =
-        normalizedMetrics.accuracyRate * weights.accuracyRate +
-        normalizedMetrics.averageAnswerTime * weights.averageAnswerTime +
-        normalizedMetrics.attemptsPerQuestion * weights.attemptsPerQuestion +
-        normalizedMetrics.completionRate * weights.completionRate;
+        (normalizedMetrics.accuracyRate * weights.accuracyRate) +
+        (normalizedMetrics.averageAnswerTime * weights.averageAnswerTime) +
+        (normalizedMetrics.attemptsPerQuestion * weights.attemptsPerQuestion) +
+        (normalizedMetrics.completionRate * weights.completionRate);
 
     console.log(`📊 Performance Score: ${performanceScore.toFixed(2)}`);
 
     let recommendedDifficulty;
-    if (performanceScore >= 0.85) {
+    if (performanceScore >= 0.75) {  // Adjusted threshold for "easy"
         recommendedDifficulty = 'easy';
-    } else if (performanceScore >= 0.6) {
+    } else if (performanceScore >= 0.5) {  // Adjusted threshold for "medium"
         recommendedDifficulty = 'medium';
     } else {
         recommendedDifficulty = 'hard';
     }
 
     console.log(`✅ Recommended Difficulty: ${recommendedDifficulty}`);
-
+    
     return recommendedDifficulty;
 }
-
-
-
 
 module.exports = { calculateMetrics, calculateDifficultyLevel };
 
