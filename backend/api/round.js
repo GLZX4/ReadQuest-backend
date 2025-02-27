@@ -28,7 +28,9 @@ module.exports = (pool) => {
                 return res.status(404).json({ message: 'No rounds found' });
             }
 
+            console.log('rounds:', rounds.rows);
             const randomSelectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
+            console.log('Selected Round:', randomSelectedRound);
             res.json(randomSelectedRound);
     
         } catch (error) {
