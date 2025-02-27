@@ -19,8 +19,7 @@ module.exports = (pool) => {
                 `SELECT roundID, qBankID, difficultyLevel, status
                  FROM Rounds
                  WHERE difficultyLevel = $1
-                 AND status = 'incomplete'
-                 LIMIT 1`,
+                 AND status = 'incomplete'`,
                 [difficultyLevel]
             );
     
