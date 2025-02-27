@@ -27,8 +27,10 @@ module.exports = (pool) => {
             if (rounds.rows.length === 0) {
                 return res.status(404).json({ message: 'No rounds found' });
             }
+
+            const randomSelectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
+            res.json(randomSelectedRound);
     
-            res.json(rounds.rows[0]);
         } catch (error) {
             console.error('Error fetching round:', error);
             res.status(500).json({ message: 'Error fetching round' });
