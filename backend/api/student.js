@@ -7,52 +7,64 @@ const router = express.Router();
 
 module.exports = (pool) => {
 
-    // Get all student rounds completed
-    router.get('/completed-rounds', verifyToken, async (req, res) => {
-        const { userID } = req.query;
-    
-        if (!userID) {
-            console.log('userID is required for completed rounds');
-            return res.status(400).json({ message: 'userID is required' });
-        }
-    
-        try {
-            const result = await pool.query(
-                `SELECT 
-                    associationid,
-                    roundid, 
-                    completedat, 
-                    status, 
-                    score 
-                 FROM roundassociation
-                 WHERE userid = $1 AND status = 'completed'
-                 ORDER BY completedat DESC`,
-                [userID]
-            );
-    
-            res.status(200).json(result.rows);
-        } catch (error) {
-            console.error('Error fetching completed rounds:', error);
-            res.status(500).json({ message: 'Error fetching completed rounds' });
-        }
-    });
+// Get all student rounds completed
+router.get('/completed-rounds', verifyToken, async (req, res) => {
+    const { userID } = req.query;
+
+    if (!userID) {
+        console.log('userID is required for completed rounds');
+        return res.status(400).json({ message: 'userID is required' });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT 
+                associationid,
+                roundid, 
+                completedat, 
+                status, 
+                score 
+                FROM roundassociation
+                WHERE userid = $1 AND status = 'completed'
+                ORDER BY completedat DESC`,
+            [userID]
+        );
+
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error fetching completed rounds:', error);
+        res.status(500).json({ message: 'Error fetching completed rounds' });
+    }
+});
 
     
 router.get("/get-streak", verifyToken, async (req, res) => {
     const { studentId } = req.query;
+    console.log("📥 Received request for /get-streak with studentId:", studentId);
+
     if (!studentId) {
+        console.warn("⚠️ Student ID is missing in request.");
         return res.status(400).json({ message: "Student ID is required" });
     }
 
     try {
+        console.log("🔍 Querying database for streak data...");
         const result = await pool.query(
             "SELECT currentstreak, beststreak FROM streaks WHERE userid = $1",
             [studentId]
         );
 
+        console.log("📝 Query Result:", result.rows);
+
         if (result.rows.length === 0) {
+            console.warn("⚠️ No streak record found for studentId:", studentId);
             return res.status(200).json({ current: 0, best: 0 }); // Default values
         }
+
+        console.log("✅ Streak data retrieved:", {
+            current: result.rows[0].currentstreak,
+            best: result.rows[0].beststreak
+        });
 
         res.status(200).json({
             current: result.rows[0].currentstreak,
@@ -61,9 +73,10 @@ router.get("/get-streak", verifyToken, async (req, res) => {
 
     } catch (error) {
         console.error("❌ Error fetching streak:", error);
-        res.status(500).json({ message: "Error fetching streak" });
+        res.status(500).json({ message: "Error fetching streak", error: error.message });
     }
 });
+    
 
 
 router.post("/update-streak", verifyToken, async (req, res) => {
