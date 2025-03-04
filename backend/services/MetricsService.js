@@ -95,16 +95,25 @@ module.exports = { calculateMetrics, calculateDifficultyLevel };
 * @param {number} userID - The user ID.
 */
 const addDefaultMetrics = async (pool, userID) => {
-    const defaultMetrics = {
-        totalRoundsPlayed: 0,
-        averageAnswerTime: 0.0,
-        accuracyRate: 0.0,
-        attemptsPerQuestion: 0.0,
-        difficultyLevel: 'medium', // Default difficulty
-        completionRate: 0.0,
-    };
+    const client = await pool.connect();
 
     try {
+        const checkQuery = `SELECT COUNT(*) FROM PerformanceMetrics WHERE userID = $1`;
+        const checkResult = await client.query(checkQuery, [userID]);
+        if (parseInt(checkResult.rows[0].count) > 0) {
+            console.log(`Default metrics already exist for userID: ${userID}`);
+            return;
+        }
+
+        const defaultMetrics = {
+            totalRoundsPlayed: 0,
+            averageAnswerTime: 0.0,
+            accuracyRate: 0.0,
+            attemptsPerQuestion: 0.0,
+            difficultyLevel: 'medium', // Default difficulty
+            completionRate: 0.0,
+        };
+    
         await pool.query(
             `INSERT INTO PerformanceMetrics (
                 userID, 
@@ -130,6 +139,8 @@ const addDefaultMetrics = async (pool, userID) => {
     } catch (error) {
         console.error('Error creating default metrics:', error);
         throw error;
+    } finally {
+        client.release();
     }
 };
 
