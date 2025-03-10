@@ -14,6 +14,18 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }, // Necessary for Supabase
 });
 
+// connect to database under test environment
+if (process.env.NODE_ENV !== "test") {
+    pool.connect((err) => {
+        if (err) {
+            console.error("Failed to connect to the database:", err.message);
+        } else {
+            console.log("Connected to the PostgreSQL database.");
+        }
+    });
+}
+
+
 // Test the database connection
 pool.connect((err) => {
     if (err) {
@@ -28,4 +40,9 @@ pool.connect((err) => {
     }
 });
 
-module.exports = pool;
+// Close the database connection
+const closeDB = async () => {
+    await pool.end();
+};
+
+module.exports = {pool, closeDB};

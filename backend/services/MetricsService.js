@@ -19,11 +19,11 @@ function calculateMetrics(stats) {
         totalRoundsAvailable,
     } = stats;
 
-    const accuracyRate = totalQuestions > 0 ? (correctAnswersCount / totalQuestions) * 100 : 0;
-    const averageAnswerTime = totalQuestions > 0 ? totalAnswerTime / totalQuestions : 0;
-    const attemptsPerQuestion = totalQuestions > 0 ? totalAttempts / totalQuestions : 0;
-    const completionRate = totalRoundsAvailable > 0 ? (roundsPlayed / totalRoundsAvailable) * 100 : 0;
-
+    const accuracyRate = Math.max(0, stats.totalQuestions > 0 ? (stats.correctAnswersCount / stats.totalQuestions) * 100 : 0);
+    const averageAnswerTime = Math.max(0, stats.totalQuestions > 0 ? stats.totalAnswerTime / stats.totalQuestions : 0);
+    const attemptsPerQuestion = Math.max(0, stats.totalQuestions > 0 ? stats.totalAttempts / stats.totalQuestions : 0);
+    const completionRate = Math.max(0, stats.totalRoundsAvailable > 0 ? (stats.roundsPlayed / stats.totalRoundsAvailable) * 100 : 0);
+    
     return {
         accuracyRate: parseFloat(accuracyRate.toFixed(2)),
         averageAnswerTime: parseFloat(averageAnswerTime.toFixed(2)),
