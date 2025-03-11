@@ -154,14 +154,22 @@ module.exports = (pool) => {
                     console.log('Final Comparison Result:', isCorrect);
     
                 } catch (error) {
-                    console.error('Error processing JSON for dragDrop:', error);
+                    console.error('❌ Error processing JSON for dragDrop:', error);
+                    console.log('❌ JSON error message:', error.message);
+                    console.log('❌ JSON error stack:', error.stack);
                     return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
                 }
+                
             } else {
                 return res.status(400).json({ message: 'Unsupported question type' });
             }
     
+            console.log('🚀 Final Comparison Result:', isCorrect);
+            if (!isCorrect) {
+                console.log('❌ Mismatch detected - returning incorrect.');
+            }
             res.json({ isCorrect });
+
         } catch (error) {
             console.error('Error validating answer:', error);
             res.status(500).json({ message: 'Error validating answer' });
