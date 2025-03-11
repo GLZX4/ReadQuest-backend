@@ -94,74 +94,74 @@ module.exports = (pool) => {
     
     
     
-    // Route to validate an answer
     router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
-
-        if (!questionID || !selectedAnswer) {
+    
+        if (!questionID || !Array.isArray(selectedAnswer)) {
             return res.status(400).json({ message: 'questionID and selectedAnswer are required' });
         }
-
-        console.log('Validating answer:', JSON.stringify(selectedAnswer, null, 2), 'for question:', questionID);
-
+    
+        console.log('🔍 Validating Answer:', JSON.stringify(selectedAnswer, null, 2));
+    
+        // Check for missing IDs in the user's answer
+        const hasNullID = selectedAnswer.some(item => item.id === null);
+        if (hasNullID) {
+            console.error("❌ Error: User submitted an answer with null ID!");
+            return res.status(400).json({ message: "Invalid answer format: Some answers have null IDs." });
+        }
+    
         try {
             const result = await pool.query(
                 'SELECT questiontype, correctanswer FROM questions WHERE QuestionID = $1',
                 [questionID]
             );
-
+    
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Question not found' });
             }
-
+    
             const { questiontype, correctanswer } = result.rows[0];
-
+    
             console.log('Question Type:', questiontype);
             console.log('Correct Answer from DB:', correctanswer);
-            console.log('User Selected Answer:', JSON.stringify(selectedAnswer, null, 2));
-
+    
             let isCorrect = false;
-
+    
             switch (questiontype) {
-                case 'multipleChoice':
-                    isCorrect = selectedAnswer === correctanswer;
-                    break;
-
                 case 'dragDrop':
                     try {
                         const correctAnswerObj = typeof correctanswer === "string" ? JSON.parse(correctanswer) : correctanswer;
                         const selectedAnswerObj = selectedAnswer;
-
+    
                         const sortedCorrect = correctAnswerObj.sort((a, b) => a.position - b.position);
                         const sortedSelected = selectedAnswerObj.sort((a, b) => a.position - b.position);
-
-                        console.log('Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
-                        console.log('Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
-
-                        isCorrect = JSON.stringify(sortedCorrect) === JSON.stringify(sortedSelected);
+    
+                        console.log(' Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
+                        console.log(' Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
+    
+                        isCorrect = sortedCorrect.every((correctItem, index) =>
+                            sortedSelected[index] &&
+                            correctItem.id === sortedSelected[index].id &&
+                            correctItem.position === sortedSelected[index].position
+                        );
+    
                     } catch (error) {
-                        console.error('Error processing JSON for', questiontype, ':', error);
-                        return res.status(400).json({ message: 'Invalid answer format for ' + questiontype });
+                        console.error('❌ Error processing JSON for dragDrop:', error);
+                        return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
                     }
                     break;
-
-                case 'trueFalse':
-                    isCorrect = selectedAnswer === correctanswer;
-                    break;
-
+    
                 default:
                     return res.status(400).json({ message: 'Unsupported question type' });
             }
-
-            console.log('✅ Is Correct:', isCorrect);
+    
+            console.log('Is Correct:', isCorrect);
             res.json({ isCorrect });
         } catch (error) {
             console.error('❌ Error validating answer:', error);
             res.status(500).json({ message: 'Error validating answer' });
         }
     });
-
     
-
     return router;
 };
