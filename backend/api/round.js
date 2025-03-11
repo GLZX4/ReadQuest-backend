@@ -92,8 +92,8 @@ module.exports = (pool) => {
         }
     });
     
-    
-    
+
+    // Validate answer for dragDrop question
     router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
     
@@ -102,13 +102,6 @@ module.exports = (pool) => {
         }
     
         console.log('🔍 Validating Answer:', JSON.stringify(selectedAnswer, null, 2));
-    
-        // Check for missing IDs in the user's answer
-        const hasNullID = selectedAnswer.some(item => item.id === null);
-        if (hasNullID) {
-            console.error("❌ Error: User submitted an answer with null ID!");
-            return res.status(400).json({ message: "Invalid answer format: Some answers have null IDs." });
-        }
     
         try {
             const result = await pool.query(
@@ -123,45 +116,58 @@ module.exports = (pool) => {
             const { questiontype, correctanswer } = result.rows[0];
     
             console.log('Question Type:', questiontype);
-            console.log('Correct Answer from DB:', correctanswer);
+            console.log('Correct Answer from DB (Raw):', correctanswer);
     
             let isCorrect = false;
     
-            switch (questiontype) {
-                case 'dragDrop':
-                    try {
-                        const correctAnswerObj = typeof correctanswer === "string" ? JSON.parse(correctanswer) : correctanswer;
-                        const selectedAnswerObj = selectedAnswer;
-    
-                        const sortedCorrect = correctAnswerObj.sort((a, b) => a.position - b.position);
-                        const sortedSelected = selectedAnswerObj.sort((a, b) => a.position - b.position);
-    
-                        console.log(' Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
-                        console.log(' Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
-    
-                        isCorrect = sortedCorrect.every((correctItem, index) =>
-                            sortedSelected[index] &&
-                            correctItem.id === sortedSelected[index].id &&
-                            correctItem.position === sortedSelected[index].position
-                        );
-    
-                    } catch (error) {
-                        console.error('❌ Error processing JSON for dragDrop:', error);
-                        return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
-                    }
-                    break;
-    
-                default:
-                    return res.status(400).json({ message: 'Unsupported question type' });
+            if (typeof correctanswer === "string") {
+                console.log('Correct Answer is a STRING, parsing...');
+                correctanswer = JSON.parse(correctanswer);
             }
     
-            console.log('Is Correct:', isCorrect);
+            console.log('Correct Answer (Parsed as Object):', JSON.stringify(correctanswer, null, 2));
+    
+            if (questiontype === 'dragDrop') {
+                try {
+                    const sortedCorrect = correctanswer.sort((a, b) => a.position - b.position);
+                    const sortedSelected = selectedAnswer.sort((a, b) => a.position - b.position);
+    
+                    console.log('Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
+                    console.log('Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
+    
+                    sortedCorrect.forEach((correctItem, index) => {
+                        const userItem = sortedSelected[index];
+                        console.log(`🔎 Comparing index ${index}:`);
+                        console.log(`Correct ID: ${correctItem.id} (Type: ${typeof correctItem.id})`);
+                        console.log(`User ID: ${userItem.id} (Type: ${typeof userItem.id})`);
+                        console.log(`Correct Position: ${correctItem.position} (Type: ${typeof correctItem.position})`);
+                        console.log(`User Position: ${userItem.position} (Type: ${typeof userItem.position})`);
+                        console.log(`Match? ${correctItem.id == userItem.id && correctItem.position == userItem.position}`);
+                    });
+    
+                    isCorrect = sortedCorrect.every((correctItem, index) =>
+                        sortedSelected[index] &&
+                        Number(correctItem.id) === Number(sortedSelected[index].id) &&
+                        Number(correctItem.position) === Number(sortedSelected[index].position)
+                    );
+    
+                    console.log('Final Comparison Result:', isCorrect);
+    
+                } catch (error) {
+                    console.error('Error processing JSON for dragDrop:', error);
+                    return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
+                }
+            } else {
+                return res.status(400).json({ message: 'Unsupported question type' });
+            }
+    
             res.json({ isCorrect });
         } catch (error) {
-            console.error('❌ Error validating answer:', error);
+            console.error('Error validating answer:', error);
             res.status(500).json({ message: 'Error validating answer' });
         }
     });
+    
     
     return router;
 };
