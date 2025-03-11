@@ -1,3 +1,5 @@
+//server.js
+
 const app = require('./index'); // Import app from index.js
 const PORT = process.env.PORT || 5000;
 
