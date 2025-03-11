@@ -127,7 +127,7 @@ module.exports = (pool) => {
     
             console.log('Correct Answer (Parsed as Object):', JSON.stringify(correctanswer, null, 2));
     
-            if (questiontype === 'dragDrop') {
+            if (questiontype === 'drag_drop') {
                 try {
                     const sortedCorrect = correctanswer.sort((a, b) => a.position - b.position);
                     const sortedSelected = selectedAnswer.sort((a, b) => a.position - b.position);
@@ -169,7 +169,7 @@ module.exports = (pool) => {
                 
                     console.log('✅ Final Comparison Result:', isCorrect);
                 } catch (error) {
-                    console.error('❌ Error processing JSON for dragDrop:', error);
+                    console.log('❌ Error processing JSON for dragDrop:', error);
                     return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
                 }
                 
