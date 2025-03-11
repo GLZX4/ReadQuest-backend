@@ -113,7 +113,7 @@ module.exports = (pool) => {
                 return res.status(404).json({ message: 'Question not found' });
             }
     
-            const { questiontype, correctanswer } = result.rows[0];
+            let { questiontype, correctanswer } = result.rows[0];
     
             console.log('Question Type:', questiontype);
             console.log('Correct Answer from DB (Raw):', correctanswer);
