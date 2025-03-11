@@ -131,12 +131,19 @@ module.exports = (pool) => {
                 try {
                     const sortedCorrect = correctanswer.sort((a, b) => a.position - b.position);
                     const sortedSelected = selectedAnswer.sort((a, b) => a.position - b.position);
-    
-                    console.log('Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
-                    console.log('Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
-    
+                
+                    console.log('📌 Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
+                    console.log('📌 Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
+                
+                    // 🔍 Debug individual items
                     sortedCorrect.forEach((correctItem, index) => {
                         const userItem = sortedSelected[index];
+                
+                        if (!userItem) {
+                            console.log(`❌ Mismatch detected - User answer missing at index ${index}`);
+                            return res.status(400).json({ message: 'Invalid answer format - missing values' });
+                        }
+                
                         console.log(`🔎 Comparing index ${index}:`);
                         console.log(`Correct ID: ${correctItem.id} (Type: ${typeof correctItem.id})`);
                         console.log(`User ID: ${userItem.id} (Type: ${typeof userItem.id})`);
@@ -144,19 +151,25 @@ module.exports = (pool) => {
                         console.log(`User Position: ${userItem.position} (Type: ${typeof userItem.position})`);
                         console.log(`Match? ${correctItem.id == userItem.id && correctItem.position == userItem.position}`);
                     });
-    
-                    isCorrect = sortedCorrect.every((correctItem, index) =>
-                        sortedSelected[index] &&
-                        Number(correctItem.id) === Number(sortedSelected[index].id) &&
-                        Number(correctItem.position) === Number(sortedSelected[index].position)
-                    );
-    
-                    console.log('Final Comparison Result:', isCorrect);
-    
+                
+                    // Modified comparison logic to ensure undefined values are caught
+                    isCorrect = sortedCorrect.every((correctItem, index) => {
+                        if (!sortedSelected[index]) {
+                            console.log(`❌ Error: User answer missing at index ${index}`);
+                            return false;
+                        }
+                
+                        const match =
+                            Number(correctItem.id) === Number(sortedSelected[index].id) &&
+                            Number(correctItem.position) === Number(sortedSelected[index].position);
+                
+                        console.log(`✅ Index ${index} Match Result:`, match);
+                        return match;
+                    });
+                
+                    console.log('✅ Final Comparison Result:', isCorrect);
                 } catch (error) {
                     console.error('❌ Error processing JSON for dragDrop:', error);
-                    console.log('❌ JSON error message:', error.message);
-                    console.log('❌ JSON error stack:', error.stack);
                     return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
                 }
                 
