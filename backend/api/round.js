@@ -93,94 +93,63 @@ module.exports = (pool) => {
     });
     
 
-    // Validate answer for dragDrop question
+    // Validate answer for a specific question
     router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
-    
+
         if (!questionID || !Array.isArray(selectedAnswer)) {
             return res.status(400).json({ message: 'questionID and selectedAnswer are required' });
         }
-    
+
         console.log('🔍 Validating Answer:', JSON.stringify(selectedAnswer, null, 2));
-    
+
         try {
             const result = await pool.query(
                 'SELECT questiontype, correctanswer FROM questions WHERE QuestionID = $1',
                 [questionID]
             );
-    
+
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Question not found' });
             }
-    
+
             let { questiontype, correctanswer } = result.rows[0];
-    
-            console.log('Question Type:', questiontype);
-            console.log('Correct Answer from DB (Raw):', correctanswer);
-    
-            let isCorrect = false;
-    
+
+            console.log('📌 Question Type:', questiontype);
+            console.log('✅ Correct Answer from DB (Raw):', correctanswer);
+
             if (typeof correctanswer === "string") {
-                console.log('Correct Answer is a STRING, parsing...');
+                console.log('⚠️ Correct Answer is a STRING, parsing...');
                 correctanswer = JSON.parse(correctanswer);
             }
-    
-            console.log('Correct Answer (Parsed as Object):', JSON.stringify(correctanswer, null, 2));
-    
-            if (questiontype === 'drag_drop') {
-                try {
-                    const sortedCorrect = correctanswer.sort((a, b) => a.position - b.position);
-                    const sortedSelected = selectedAnswer.sort((a, b) => a.position - b.position);
-                
-                    console.log('📌 Sorted Correct Answer:', JSON.stringify(sortedCorrect, null, 2));
-                    console.log('📌 Sorted User Answer:', JSON.stringify(sortedSelected, null, 2));
-                
-                    // 🔍 Debug individual items
-                    sortedCorrect.forEach((correctItem, index) => {
-                        const userItem = sortedSelected[index];
-                
-                        if (!userItem) {
-                            console.log(`❌ Mismatch detected - User answer missing at index ${index}`);
-                            return res.status(400).json({ message: 'Invalid answer format - missing values' });
-                        }
-                
-                        console.log(`🔎 Comparing index ${index}:`);
-                        console.log(`Correct ID: ${correctItem.id} (Type: ${typeof correctItem.id})`);
-                        console.log(`User ID: ${userItem.id} (Type: ${typeof userItem.id})`);
-                        console.log(`Correct Position: ${correctItem.position} (Type: ${typeof correctItem.position})`);
-                        console.log(`User Position: ${userItem.position} (Type: ${typeof userItem.position})`);
-                        console.log(`Match? ${correctItem.id == userItem.id && correctItem.position == userItem.position}`);
-                    });
-                
-                    // Modified comparison logic to ensure undefined values are caught
-                    isCorrect = sortedCorrect.every((correctItem, index) => {
-                        if (!sortedSelected[index]) {
-                            console.log(`❌ Error: User answer missing at index ${index}`);
-                            return false;
-                        }
-                
-                        const match =
-                            Number(correctItem.id) === Number(sortedSelected[index].id) &&
-                            Number(correctItem.position) === Number(sortedSelected[index].position);
-                
-                        console.log(`✅ Index ${index} Match Result:`, match);
-                        return match;
-                    });
-                
-                    console.log('✅ Final Comparison Result:', isCorrect);
-                } catch (error) {
-                    console.log('❌ Error processing JSON for dragDrop:', error);
-                    return res.status(400).json({ message: 'Invalid answer format for dragDrop' });
-                }
-                
-            } else {
-                return res.status(400).json({ message: 'Unsupported question type' });
+
+            console.log('✅ Correct Answer (Parsed as Object):', JSON.stringify(correctanswer, null, 2));
+
+            let isCorrect = false;
+
+            switch (questiontype) {
+                case 'drag_drop':
+                    try {
+                        isCorrect = validateDragDrop(correctanswer, selectedAnswer);
+                    } catch (error) {
+                        console.error('Error processing JSON for drag_drop:', error);
+                        return res.status(400).json({ message: 'Invalid answer format for drag_drop' });
+                    }
+                    break;
+
+                case 'multipleChoice':
+                    isCorrect = selectedAnswer === correctanswer;
+                    break;
+
+                case 'trueFalse':
+                    isCorrect = selectedAnswer === correctanswer;
+                    break;
+
+                default:
+                    return res.status(400).json({ message: `Unsupported question type: ${questiontype}` });
             }
-    
-            console.log('🚀 Final Comparison Result:', isCorrect);
-            if (!isCorrect) {
-                console.log('❌ Mismatch detected - returning incorrect.');
-            }
+
+            console.log('Final Comparison Result:', isCorrect);
             res.json({ isCorrect });
 
         } catch (error) {
@@ -188,6 +157,7 @@ module.exports = (pool) => {
             res.status(500).json({ message: 'Error validating answer' });
         }
     });
+
     
     
     return router;
