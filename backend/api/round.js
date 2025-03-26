@@ -97,8 +97,8 @@ module.exports = (pool) => {
     router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
 
-        if (!questionID || !Array.isArray(selectedAnswer)) {
-            return res.status(400).json({ message: 'questionID and selectedAnswer are required' });
+        if (!questionID) {
+            return res.status(400).json({ message: 'questionID is required' });
         }
 
         console.log('🔍 Validating Answer:', JSON.stringify(selectedAnswer, null, 2));
@@ -168,6 +168,6 @@ module.exports = (pool) => {
             Number(correctItem.position) === Number(sortedSelected[index].position)
         );
     }
-    
+
     return router;
 };
