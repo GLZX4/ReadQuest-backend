@@ -158,7 +158,16 @@ module.exports = (pool) => {
         }
     });
 
+    function validateDragDrop(correctanswer, selectedAnswer) {
+        const sortedCorrect = [...correctanswer].sort((a, b) => a.position - b.position);
+        const sortedSelected = [...selectedAnswer].sort((a, b) => a.position - b.position);
     
+        return sortedCorrect.every((correctItem, index) =>
+            sortedSelected[index] &&
+            Number(correctItem.id) === Number(sortedSelected[index].id) &&
+            Number(correctItem.position) === Number(sortedSelected[index].position)
+        );
+    }
     
     return router;
 };
