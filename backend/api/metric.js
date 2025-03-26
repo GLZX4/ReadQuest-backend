@@ -57,16 +57,16 @@ router.post('/process-metrics', async (req, res) => {
             completionRate,
             newUserDifficulty,
         ]);
-        res.status(200).json({ message: "✅ Metrics processed successfully", data: result.rows[0] });
+        res.status(200).json({ message: "Metrics processed successfully", data: result.rows[0] });
     } catch (error) {
-        console.error("❌ Error processing metrics:", error);
+        console.error("Error processing metrics:", error);
         res.status(500).json({ message: "Error processing metrics" });
     }
 });
 
         // Process metrics
         router.post('/process-metrics', async (req, res) => {
-            console.log('📊 Processing metrics:', req.body);
+            console.log('Processing metrics:', req.body);
 
             // Extract and explicitly convert values
             const userID = Number(req.body.userID); // Ensure Integer
@@ -117,9 +117,9 @@ router.post('/process-metrics', async (req, res) => {
                     completionRate,
                     newUserDifficulty,
                 ]);
-                res.status(200).json({ message: "✅ Metrics processed successfully", data: result.rows[0] });
+                res.status(200).json({ message: "Metrics processed successfully", data: result.rows[0] });
             } catch (error) {
-                console.error("❌ Error processing metrics:", error);
+                console.error("Error processing metrics:", error);
                 res.status(500).json({ message: "Error processing metrics" });
             }
         });

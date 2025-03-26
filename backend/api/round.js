@@ -7,38 +7,39 @@ module.exports = (pool) => {
 
     // Select a round by difficulty and return roundID and qBankID
     router.get('/select-by-difficulty', verifyToken, async (req, res) => {
+        const difficultyOrder = ['easy', 'medium', 'hard'];
         const difficultyLevel = req.query.difficulty;
-        console.log('recevied request for selecting round by difficulty:', difficultyLevel);
-    
-        if (!difficultyLevel) {
-            return res.status(400).json({ message: 'difficultyLevel is required' });
+
+        const requestedIndex = difficultyOrder.indexOf(difficultyLevel.toLowerCase());
+
+        if (requestedIndex === -1) {
+            return res.status(400).json({ message: 'Invalid difficulty level' });
         }
-    
-        try {
+
+        // Ensure the nearest available difficulty is selected if the requested one has no rounds
+        for (let i = requestedIndex; i < difficultyOrder.length; i++) {
+            const currentLevel = difficultyOrder[i];
+
             const rounds = await pool.query(
                 `SELECT roundID, qBankID, difficultyLevel, status
-                 FROM Rounds
-                 WHERE difficultyLevel = $1
-                 AND status = 'incomplete'`,
-                [difficultyLevel]
+                FROM Rounds
+                WHERE difficultyLevel = $1 AND status = 'incomplete'`,
+                [currentLevel]
             );
-    
-            if (rounds.rows.length === 0) {
-                return res.status(404).json({ message: 'No rounds found' });
+
+            if (rounds.rows.length > 0) {
+                console.log(`✅ Found ${rounds.rows.length} round(s) for difficulty '${currentLevel}'`);
+                const randomSelectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
+                console.log('🎯 Selected Round:', randomSelectedRound);
+                return res.json(randomSelectedRound);
             }
 
-            console.log('rounds:', rounds.rows);
-            const randomSelectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
-            console.log('Selected Round:', randomSelectedRound);
-            res.json(randomSelectedRound);
-    
-        } catch (error) {
-            console.error('Error fetching round:', error);
-            res.status(500).json({ message: 'Error fetching round' });
+            console.log(` No rounds found for difficulty '${currentLevel}', trying next...`);
         }
+
+        return res.status(404).json({ message: 'No rounds available for any difficulty.' });
     });
-    
-    
+
 
     // Retrieve question bank by QBankID
     router.get('/retrieve-qBank', verifyToken, async (req, res) => {

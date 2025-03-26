@@ -63,7 +63,7 @@ function calculateDifficultyLevel(metrics) {
         completionRate: completionRate / 100,
     };
 
-    console.log("🔍 Normalized Metrics:", normalizedMetrics);
+    console.log("Normalized Metrics:", normalizedMetrics);
 
     const performanceScore =
         (normalizedMetrics.accuracyRate * weights.accuracyRate) +
@@ -71,7 +71,7 @@ function calculateDifficultyLevel(metrics) {
         (normalizedMetrics.attemptsPerQuestion * weights.attemptsPerQuestion) +
         (normalizedMetrics.completionRate * weights.completionRate);
 
-    console.log(`📊 Performance Score: ${performanceScore.toFixed(2)}`);
+    console.log(`Performance Score: ${performanceScore.toFixed(2)}`);
 
     let recommendedDifficulty;
     if (performanceScore >= 0.75) {  // Adjusted threshold for "easy"
@@ -82,7 +82,7 @@ function calculateDifficultyLevel(metrics) {
         recommendedDifficulty = 'hard';
     }
 
-    console.log(`✅ Recommended Difficulty: ${recommendedDifficulty}`);
+    console.log(`Recommended Difficulty: ${recommendedDifficulty}`);
     
     return recommendedDifficulty;
 }

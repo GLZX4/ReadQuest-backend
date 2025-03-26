@@ -48,7 +48,7 @@ module.exports = (pool) => {
                     RETURNING *;
                 `;
                 const updated = await pool.query(updateQuery, [progressData, isUnlocked, studentId, achievementId]);
-                res.status(200).json({ message: '✅ Achievement updated', data: updated.rows[0] });
+                res.status(200).json({ message: 'Achievement updated', data: updated.rows[0] });
             } else {
                 const insertQuery = `
                     INSERT INTO student_achievements (userid, achievementid, progress, isunlocked, unlockedat)
@@ -56,10 +56,10 @@ module.exports = (pool) => {
                     RETURNING *;
                 `;
                 const inserted = await pool.query(insertQuery, [studentId, achievementId, progressData, isUnlocked]);
-                res.status(200).json({ message: '✅ Achievement added', data: inserted.rows[0] });
+                res.status(200).json({ message: 'Achievement added', data: inserted.rows[0] });
             }
         } catch (error) {
-            console.error('❌ Error updating achievement progress:', error);
+            console.error('Error updating achievement progress:', error);
             res.status(500).json({ message: 'Error updating achievement progress' });
         }
     });
@@ -102,7 +102,7 @@ module.exports = (pool) => {
 
             res.status(200).json(combinedAchievements);
         } catch (error) {
-            console.error('❌ Error fetching achievements:', error);
+            console.error('Error fetching achievements:', error);
             res.status(500).json({ message: 'Error fetching achievements' });
         }
     });

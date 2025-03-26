@@ -54,14 +54,14 @@ router.get("/get-streak", verifyToken, async (req, res) => {
             [studentId]
         );
 
-        console.log("📝 Query Result:", result.rows);
+        console.log("Query Result:", result.rows);
 
         if (result.rows.length === 0) {
             console.warn("⚠️ No streak record found for studentId:", studentId);
             return res.status(200).json({ current: 0, best: 0 }); // Default values
         }
 
-        console.log("✅ Streak data retrieved:", {
+        console.log("Streak data retrieved:", {
             current: result.rows[0].currentstreak,
             best: result.rows[0].beststreak
         });
@@ -72,7 +72,7 @@ router.get("/get-streak", verifyToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error fetching streak:", error);
+        console.error("Error fetching streak:", error);
         res.status(500).json({ message: "Error fetching streak", error: error.message });
     }
 });
@@ -123,10 +123,10 @@ router.post("/update-streak", verifyToken, async (req, res) => {
             [newStreak, newBestStreak, today, studentId]
         );
 
-        res.status(200).json({ message: "✅ Streak updated!", currentStreak: newStreak, bestStreak: newBestStreak });
+        res.status(200).json({ message: "Streak updated!", currentStreak: newStreak, bestStreak: newBestStreak });
 
     } catch (error) {
-        console.error("❌ Error updating streak:", error);
+        console.error("Error updating streak:", error);
         res.status(500).json({ message: "Error updating streak" });
     }
 });
