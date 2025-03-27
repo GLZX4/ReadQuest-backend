@@ -119,9 +119,12 @@ module.exports = (pool) => {
             console.log('📌 Question Type:', questiontype);
             console.log('✅ Correct Answer from DB (Raw):', correctanswer);
 
-            if (typeof correctanswer === "string") {
-                console.log('⚠️ Correct Answer is a STRING, parsing...');
-                correctanswer = JSON.parse(correctanswer);
+            try {
+                if (typeof correctanswer === "string" && (correctanswer.startsWith("{") || correctanswer.startsWith("["))) {
+                    correctanswer = JSON.parse(correctanswer);
+                }
+            } catch (err) {
+                console.warn("⚠️ Could not parse correctanswer, keeping as string:", correctanswer);
             }
 
             console.log('✅ Correct Answer (Parsed as Object):', JSON.stringify(correctanswer, null, 2));
