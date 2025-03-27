@@ -74,9 +74,9 @@ function calculateDifficultyLevel(metrics) {
     console.log(`Performance Score: ${performanceScore.toFixed(2)}`);
 
     let recommendedDifficulty;
-    if (performanceScore >= 0.75) {  // Adjusted threshold for "easy"
+    if (performanceScore >= 0.78) {
         recommendedDifficulty = 'easy';
-    } else if (performanceScore >= 0.5) {  // Adjusted threshold for "medium"
+    } else if (performanceScore >= 0.6) {
         recommendedDifficulty = 'medium';
     } else {
         recommendedDifficulty = 'hard';
