@@ -28,9 +28,9 @@ module.exports = (pool) => {
             );
 
             if (rounds.rows.length > 0) {
-                console.log(`✅ Found ${rounds.rows.length} round(s) for difficulty '${currentLevel}'`);
+                console.log(`Found ${rounds.rows.length} round(s) for difficulty '${currentLevel}'`);
                 const randomSelectedRound = rounds.rows[Math.floor(Math.random() * rounds.rows.length)];
-                console.log('🎯 Selected Round:', randomSelectedRound);
+                console.log('Selected Round:', randomSelectedRound);
                 return res.json(randomSelectedRound);
             }
 
@@ -56,7 +56,7 @@ module.exports = (pool) => {
                 return res.status(404).json({ message: 'No question bank found for this round' });
             }
 
-            res.json(questionBank.rows); // Return all questions in the response
+            res.json(questionBank.rows);
         } catch (error) {
             console.error('Error fetching question bank:', error);
             res.status(500).json({ message: 'Error fetching question bank' });
@@ -101,9 +101,6 @@ module.exports = (pool) => {
         if (!questionID) {
             return res.status(400).json({ message: 'questionID is required' });
         }
-
-        console.log('🔍 Validating Answer:', JSON.stringify(selectedAnswer, null, 2));
-
         try {
             const result = await pool.query(
                 'SELECT questiontype, correctanswer FROM questions WHERE QuestionID = $1',
@@ -116,9 +113,6 @@ module.exports = (pool) => {
 
             let { questiontype, correctanswer } = result.rows[0];
 
-            console.log('📌 Question Type:', questiontype);
-            console.log('✅ Correct Answer from DB (Raw):', correctanswer);
-
             try {
                 if (typeof correctanswer === "string" && (correctanswer.startsWith("{") || correctanswer.startsWith("["))) {
                     correctanswer = JSON.parse(correctanswer);
@@ -126,8 +120,6 @@ module.exports = (pool) => {
             } catch (err) {
                 console.warn("⚠️ Could not parse correctanswer, keeping as string:", correctanswer);
             }
-
-            console.log('✅ Correct Answer (Parsed as Object):', JSON.stringify(correctanswer, null, 2));
 
             let isCorrect = false;
 

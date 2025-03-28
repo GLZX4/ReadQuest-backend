@@ -18,7 +18,6 @@ module.exports = (pool) => {
         }
 
         try {
-            // Fetch school
             const schoolResult = await pool.query(
                 'SELECT schoolid FROM Schools WHERE schoolcode = $1',
                 [schoolCode]
@@ -28,7 +27,6 @@ module.exports = (pool) => {
             }
             const schoolID = schoolResult.rows[0].schoolid;
 
-            // Fetch or insert role
             const roleResult = await pool.query(
                 'SELECT roleID FROM role WHERE Role = $1',
                 [role]
@@ -40,10 +38,8 @@ module.exports = (pool) => {
                     [role]
                 )).rows[0].roleid;
 
-            // Hash password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Insert user
             await pool.query(
                 `INSERT INTO Users (Name, Email, password, roleID, schoolID) 
                 VALUES ($1, $2, $3, $4, $5)`,
@@ -67,7 +63,6 @@ module.exports = (pool) => {
         }
 
         try {
-            // Fetch user details and role name using JOIN
             const result = await pool.query(
                 `SELECT u.*, r.role AS role_name 
                 FROM users u
@@ -82,23 +77,19 @@ module.exports = (pool) => {
 
             const user = result.rows[0];
 
-            // Verify password
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (!passwordMatch) {
                 return res.status(401).json({ message: 'Invalid email or password.' });
             }
 
-            // Generate JWT token with userId and role
             const token = jwt.sign(
                 { userId: user.userid, role: user.role_name },
                 process.env.JWT_SECRET,
                 { expiresIn: '1h' }
             );
 
-            // Update the user's loggedIn status
             await pool.query('UPDATE users SET loggedin = TRUE WHERE email = $1', [email]);
 
-            // Respond with the token and user details
             res.json({
                 token,
                 name: user.name,
@@ -134,36 +125,30 @@ module.exports = (pool) => {
         // Register an admin user
     router.post('/register-admin', async (req, res) => {
         const { name, email, password } = req.body;
-        const role = 'admin'; // The role for this user is always "admin"
+        const role = 'admin'; 
 
-        // Validate input
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
 
         try {
-            // Hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Check if the admin role exists
             let roleResult = await pool.query('SELECT roleid FROM role WHERE role = $1', [role]);
             let roleID;
 
             if (roleResult.rows.length > 0) {
                 roleID = roleResult.rows[0].roleid;
             } else {
-                // If the admin role doesn't exist, create it
                 const newRole = await pool.query('INSERT INTO role (Role) VALUES ($1) RETURNING roleID', [role]);
                 roleID = newRole.rows[0].roleid;
             }
 
-            // Check if the email already exists
             const emailCheck = await pool.query('SELECT * FROM Users WHERE Email = $1', [email]);
             if (emailCheck.rows.length > 0) {
                 return res.status(409).json({ message: 'Email already exists.' });
             }
 
-            // Insert the admin user into the database
             await pool.query(
                 `INSERT INTO Users (name, email, password, roleid) 
                 VALUES ($1, $2, $3, $4)`,
@@ -187,7 +172,6 @@ module.exports = (pool) => {
         }
 
         try {
-            // Check if the verification code exists and is valid
             const codeResult = await pool.query(
                 `SELECT * FROM VerificationCode WHERE code = $1 AND expirationAt > NOW() AND used = FALSE`,
                 [verificationCode]
@@ -203,29 +187,24 @@ module.exports = (pool) => {
             const schoolID = codeResult.rows[0].schoolid;
 
             console.log('School ID:', schoolID);
-            // Check if the tutor role exists
             let roleResult = await pool.query('SELECT roleID FROM role WHERE Role = $1', ['tutor']);
             let roleID;
 
             if (roleResult.rows.length > 0) {
                 roleID = roleResult.rows[0].roleid;
             } else {
-                // If the tutor role doesn't exist, create it
                 const newRole = await pool.query('INSERT INTO role (Role) VALUES ($1) RETURNING roleID', ['tutor']);
                 roleID = newRole.rows[0].roleid;
             }
 
-            // Hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Insert the new tutor into the Users table
             await pool.query(
                 `INSERT INTO Users (Name, Email, password, roleID, schoolID) 
                 VALUES ($1, $2, $3, $4, $5)`,
                 [name, email, hashedPassword, roleID, schoolID]
             );
 
-            // Mark the verification code as used
             await pool.query(`UPDATE VerificationCode SET used = TRUE WHERE code = $1`, [verificationCode]);
 
             res.status(201).json({ message: 'Tutor registered successfully.' });

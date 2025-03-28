@@ -19,9 +19,8 @@ module.exports = (pool) => {
 
     //List all endpoint data
     router.get('/', (req, res) => {
-        // List all available endpoints in this router
         const availableRoutes = router.stack
-            .filter(r => r.route) // Filter out middleware
+            .filter(r => r.route) 
             .map(r => ({
                 method: Object.keys(r.route.methods)[0].toUpperCase(),
                 path: `/api/tutor${r.route.path}`
@@ -115,16 +114,16 @@ module.exports = (pool) => {
 
   // Add a new question set
 router.post('/add-Question-Set', verifyToken, async (req, res) => {
-    console.log('✅ Received request at /add-Question-Set');
+    console.log('Received request at /add-Question-Set');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
 
-    const { questions, questionType, tutorID, difficulty } = req.body; // ✅ Extract difficulty
+    const { questions, questionType, tutorID, difficulty } = req.body;
 
     if (!questions || questions.length === 0) {
         return res.status(400).json({ message: 'No questions provided' });
     }
 
-    if (!['easy', 'medium', 'hard'].includes(difficulty)) { // ✅ Validate difficulty
+    if (!['easy', 'medium', 'hard'].includes(difficulty)) { 
         return res.status(400).json({ message: 'Invalid difficulty level' });
     }
 
@@ -143,7 +142,6 @@ router.post('/add-Question-Set', verifyToken, async (req, res) => {
 
         // Insert questions
         const questionInsertPromises = questions.map(async (q) => {
-            console.log(`📌 Inserting question:`, q);
             return client.query(
                 `INSERT INTO questions (qbankid, questiontext, questiontype, answeroptions, correctanswer, additionaldata) 
                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING questionid`,
@@ -153,18 +151,15 @@ router.post('/add-Question-Set', verifyToken, async (req, res) => {
         });
 
         const insertedQuestions = await Promise.all(questionInsertPromises);
-        console.log(`✅ Inserted ${insertedQuestions.length} questions`);
 
-        // Insert into rounds with difficulty
         const roundRes = await client.query(
             `INSERT INTO rounds (userid, qbankid, status, difficultyLevel, createdat) 
-            VALUES ($1, $2, 'incomplete', $3, NOW()) RETURNING roundid`, // ✅ Use difficulty dynamically
+            VALUES ($1, $2, 'incomplete', $3, NOW()) RETURNING roundid`, 
             [tutorID, qbankid, difficulty]
         );
         const roundid = roundRes.rows[0].roundid;
-        console.log(`✅ Inserted round: ${roundid}`);
+        console.log(`Inserted round: ${roundid}`);
 
-        // Insert into roundassociation
         const roundAssociationPromises = insertedQuestions.map((qRes) => {
             return client.query(
                 `INSERT INTO roundassociation (userid, roundid, status, completedat) 
@@ -174,22 +169,18 @@ router.post('/add-Question-Set', verifyToken, async (req, res) => {
         });
 
         await Promise.all(roundAssociationPromises);
-        console.log("✅ Inserted into roundassociation");
 
         await client.query('COMMIT');
-        console.log("✅ Transaction committed successfully");
-
         res.status(200).json({ message: 'Question set and round added successfully', qbankid, roundid });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('❌ Error adding question set:', error);
+        console.error('Error adding question set:', error);
         res.status(500).json({ message: 'Error adding question set' });
     } finally {
         client.release();
         console.log("🔹 Connection released");
     }
 });
-
     return router;
 };

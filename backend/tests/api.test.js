@@ -1,5 +1,5 @@
 const request = require("supertest");
-const server = require("../server"); // Import server instance
+const server = require("../server"); 
 const { pool, closeDB } = require("../middleware/dbConfig");
 
 afterAll(async () => {

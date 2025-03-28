@@ -40,7 +40,6 @@ router.get('/completed-rounds', verifyToken, async (req, res) => {
     
 router.get("/get-streak", verifyToken, async (req, res) => {
     const { studentId } = req.query;
-    console.log("📥 Received request for /get-streak with studentId:", studentId);
 
     if (!studentId) {
         console.warn("⚠️ Student ID is missing in request.");
@@ -48,7 +47,6 @@ router.get("/get-streak", verifyToken, async (req, res) => {
     }
 
     try {
-        console.log("🔍 Querying database for streak data...");
         const result = await pool.query(
             "SELECT currentstreak, beststreak FROM streaks WHERE userid = $1",
             [studentId]
@@ -58,7 +56,7 @@ router.get("/get-streak", verifyToken, async (req, res) => {
 
         if (result.rows.length === 0) {
             console.warn("⚠️ No streak record found for studentId:", studentId);
-            return res.status(200).json({ current: 0, best: 0 }); // Default values
+            return res.status(200).json({ current: 0, best: 0 });
         }
 
         console.log("Streak data retrieved:", {
@@ -101,7 +99,7 @@ router.post("/update-streak", verifyToken, async (req, res) => {
                 "INSERT INTO streaks (userid, currentstreak, beststreak, lastactive) VALUES ($1, 1, 1, $2)",
                 [studentId, today]
             );
-            return res.status(200).json({ message: "✅ Streak started!", currentStreak: 1, bestStreak: 1 });
+            return res.status(200).json({ message: "Streak started!", currentStreak: 1, bestStreak: 1 });
         }
 
         const { currentstreak, beststreak, lastactive } = result.rows[0];
@@ -113,7 +111,7 @@ router.post("/update-streak", verifyToken, async (req, res) => {
         }
 
         if (new Date(lastActiveDate).getTime() === new Date(today).getTime() - 86400000) {
-            newStreak = currentstreak + 1; // Continue streak
+            newStreak = currentstreak + 1;
         }
 
         const newBestStreak = Math.max(newStreak, beststreak);

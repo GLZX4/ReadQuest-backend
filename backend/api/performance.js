@@ -17,7 +17,6 @@ module.exports = (pool) => {
             let metrics = result.rows[0];
     
             if (!metrics) {
-                // Default difficulty level if no metrics exist
                 const defaultDifficulty = 'medium';
                 await addDefaultMetrics(pool, userID);
                 return res.status(200).json({ difficulty: defaultDifficulty });
@@ -25,7 +24,6 @@ module.exports = (pool) => {
     
             console.log('Calculating difficulty for current metrics: ', metrics);
     
-            // Ensure all fields have a valid numeric value (replace NULLs)
             const sanitizedMetrics = {
                 accuracyRate: Number(metrics.accuracyrate) || 0,
                 averageAnswerTime: Number(metrics.averageanswertime) || 0,

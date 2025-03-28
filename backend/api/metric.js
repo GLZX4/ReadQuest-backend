@@ -4,16 +4,12 @@ const { calculateMetrics, calculateDifficultyLevel } = require('../services/Metr
 const router = express.Router();
 
 module.exports = (pool) => {
-    // Process metrics
 router.post('/process-metrics', async (req, res) => {
-    console.log('📊 Processing metrics:', req.body);
 
-    // Extract and explicitly convert values
-    const userID = Number(req.body.userID); // Ensure Integer
+    const userID = Number(req.body.userID); 
     const metrics = calculateMetrics(req.body);
-    const newUserDifficulty = String(calculateDifficultyLevel(metrics)); // Ensure String
+    const newUserDifficulty = String(calculateDifficultyLevel(metrics)); 
 
-    // Ensure all numeric values are explicitly converted
     const totalRoundsPlayed = Number.isInteger(metrics.totalRoundsPlayed) ? metrics.totalRoundsPlayed : 0;
     const averageAnswerTime = Number(metrics.averageAnswerTime) || 0;
     const accuracyRate = Number(metrics.accuracyRate) || 0;
@@ -30,7 +26,6 @@ router.post('/process-metrics', async (req, res) => {
         newUserDifficulty
     });
 
-    // Queries (No explicit casting in SQL)
     const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
     const upsertQuery = `
         INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
@@ -64,16 +59,13 @@ router.post('/process-metrics', async (req, res) => {
     }
 });
 
-        // Process metrics
         router.post('/process-metrics', async (req, res) => {
-            console.log('Processing metrics:', req.body);
 
-            // Extract and explicitly convert values
-            const userID = Number(req.body.userID); // Ensure Integer
+
+            const userID = Number(req.body.userID);
             const metrics = calculateMetrics(req.body);
-            const newUserDifficulty = String(calculateDifficultyLevel(metrics)); // Ensure String
+            const newUserDifficulty = String(calculateDifficultyLevel(metrics));
 
-            // Ensure all numeric values are explicitly converted
             const totalRoundsPlayed = Number.isInteger(metrics.totalRoundsPlayed) ? metrics.totalRoundsPlayed : 0;
             const averageAnswerTime = Number(metrics.averageAnswerTime) || 0;
             const accuracyRate = Number(metrics.accuracyRate) || 0;
@@ -90,7 +82,6 @@ router.post('/process-metrics', async (req, res) => {
                 newUserDifficulty
             });
 
-            // Queries (No explicit casting in SQL)
             const checkQuery = `SELECT metricid FROM performancemetrics WHERE userid = $1`;
             const upsertQuery = `
                 INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)

@@ -34,11 +34,6 @@ function calculateMetrics(stats) {
 
 module.exports = { calculateMetrics };
 
-/**
- * Calculates the recommended difficulty level based on performance metrics.
- * @param {Object} metrics - The performance metrics calculated by `calculateMetrics`.
- * @returns {string} - The recommended difficulty level ('easy', 'medium', 'hard').
- */
 function calculateDifficultyLevel(metrics) {
     const {
         accuracyRate,
@@ -89,11 +84,7 @@ function calculateDifficultyLevel(metrics) {
 
 module.exports = { calculateMetrics, calculateDifficultyLevel };
 
-/*
-* Adds default performance metrics for a new user.
-* @param {Pool} pool - The PostgreSQL database client.
-* @param {number} userID - The user ID.
-*/
+
 const addDefaultMetrics = async (pool, userID) => {
     const client = await pool.connect();
 

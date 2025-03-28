@@ -5,7 +5,6 @@ require('dotenv').config();
 module.exports = (pool) => {
     const router = express.Router();
 
-    // Mock admin data
     const AdminData = {
         totalUsers: 0,
         activeUsers: 0,
@@ -15,18 +14,15 @@ module.exports = (pool) => {
     // Get admin data
     router.get('/fetchAdminData', verifyToken, async (req, res) => {
         try {
-            // Fetch active users count
             const activeUsersResult = await pool.query('SELECT COUNT(*) AS activeUsersCount FROM Users WHERE loggedIn = TRUE');
             AdminData.activeUsers = activeUsersResult.rows[0].activeuserscount;
 
-            // Fetch total users count
             const totalUsersResult = await pool.query('SELECT COUNT(*) AS totalUsersCount FROM Users');
             AdminData.totalUsers = totalUsersResult.rows[0].totaluserscount;
 
-            // Check system status
-            AdminData.systemStatus = 'All systems operational'; // Assuming connection is working if this route is hit
+            AdminData.systemStatus = 'All systems operational';
 
-            console.log('AdminData:', AdminData); // Debugging log
+            console.log('AdminData:', AdminData);
             res.json(AdminData);
         } catch (error) {
             console.error('Error fetching admin data:', error);
@@ -70,11 +66,10 @@ module.exports = (pool) => {
         }
     });
 
-    // Fetch schools endpoint
     router.get('/schoolsFetch', verifyToken, async (req, res) => {
         try {
             const result = await pool.query('SELECT * FROM schools');
-            console.log('Fetched Schools:', result.rows); // Debugging log
+            console.log('Fetched Schools:', result.rows);
             res.status(200).json(result.rows);
         } catch (error) {
             console.error('Error fetching schools:', error);

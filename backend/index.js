@@ -22,7 +22,7 @@ app.use(cors());
 app.use(bodyparser.json());
 app.use(express.json());
 
-// Pass `pool` when mounting routes ✅
+// Pass `pool` when mounting routes
 app.use('/api/auth', authRoutes(pool));
 app.use('/api/student', studentRoutes(pool));
 app.use('/api/tutor', tutorRoutes(pool));
