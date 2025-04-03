@@ -89,7 +89,7 @@ module.exports = (pool) => {
                 [userID, averageAnswerTime, accuracyRate, completionRate]
             );
 
-            const xpEarned = 30; // You can scale this later
+            const xpEarned = Math.round((accuracyRate / 100) * 40 + completionRate * 0.1);
 
             const levelData = await pool.query('SELECT xp, level FROM studentLevel WHERE userID = $1', [userID]);
 
