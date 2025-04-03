@@ -89,34 +89,8 @@ module.exports = (pool) => {
                 [userID, averageAnswerTime, accuracyRate, completionRate]
             );
 
-            const xpEarned = Math.round((accuracyRate / 100) * 40 + completionRate * 0.1);
-
-            const levelData = await pool.query('SELECT xp, level FROM studentLevel WHERE userID = $1', [userID]);
-
-            if (levelData.rows.length === 0) {
-                console.warn("No level data found for user:", userID);
-                return res.status(400).json({ message: "No level data found." });
-            }
-
-            let { xp, level } = levelData.rows[0];
-            xp += xpEarned;
-
-            while (xp >= xpForNextLevel(level)) {
-                xp -= xpForNextLevel(level);
-                level++;
-            }
-
-            await pool.query(
-                `UPDATE studentLevel SET xp = $1, level = $2, lastUpdated = NOW() WHERE userID = $3`,
-                [xp, level, userID]
-            );
-
-            res.status(200).json({
-                message: 'Metrics and level updated successfully',
-                newXP: xp,
-                newLevel: level
-            });
-                    } catch (error) {
+            res.status(200).json({ message: 'Metrics updated successfully' });
+        } catch (error) {
             console.error('Error updating metrics:', error);
             res.status(500).json({ message: 'Error updating metrics' });
         }
