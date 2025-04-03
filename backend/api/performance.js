@@ -7,6 +7,10 @@ const { calculateDifficultyLevel, addDefaultMetrics } = require('../services/Met
 module.exports = (pool) => {
     const router = express.Router();
 
+    function xpForNextLevel(level) {
+        return Math.floor(100 + level * 20); 
+    }
+
     // Get performance metrics for round selection
     router.get('/students/get-difficulty', verifyToken, async (req, res) => {
         const { userID } = req.query;
@@ -85,8 +89,34 @@ module.exports = (pool) => {
                 [userID, averageAnswerTime, accuracyRate, completionRate]
             );
 
-            res.status(200).json({ message: 'Metrics updated successfully' });
-        } catch (error) {
+            const xpEarned = 30; // You can scale this later
+
+            const levelData = await pool.query('SELECT xp, level FROM studentLevel WHERE userID = $1', [userID]);
+
+            if (levelData.rows.length === 0) {
+                console.warn("No level data found for user:", userID);
+                return res.status(400).json({ message: "No level data found." });
+            }
+
+            let { xp, level } = levelData.rows[0];
+            xp += xpEarned;
+
+            while (xp >= xpForNextLevel(level)) {
+                xp -= xpForNextLevel(level);
+                level++;
+            }
+
+            await pool.query(
+                `UPDATE studentLevel SET xp = $1, level = $2, lastUpdated = NOW() WHERE userID = $3`,
+                [xp, level, userID]
+            );
+
+            res.status(200).json({
+                message: 'Metrics and level updated successfully',
+                newXP: xp,
+                newLevel: level
+            });
+                    } catch (error) {
             console.error('Error updating metrics:', error);
             res.status(500).json({ message: 'Error updating metrics' });
         }
