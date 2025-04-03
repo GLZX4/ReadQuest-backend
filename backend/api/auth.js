@@ -12,47 +12,68 @@ module.exports = (pool) => {
     // Register a new user
     router.post('/register', async (req, res) => {
         const { name, email, password, role, schoolCode } = req.body;
-
+    
         if (!name || !email || !password || !role || !schoolCode) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
-
+    
+        const client = await pool.connect();
+    
         try {
-            const schoolResult = await pool.query(
+            await client.query('BEGIN');
+    
+            const schoolResult = await client.query(
                 'SELECT schoolid FROM Schools WHERE schoolcode = $1',
                 [schoolCode]
             );
+    
             if (schoolResult.rows.length === 0) {
+                await client.query('ROLLBACK');
                 return res.status(400).json({ message: 'Invalid school code.' });
             }
+    
             const schoolID = schoolResult.rows[0].schoolid;
-
-            const roleResult = await pool.query(
+    
+            const roleResult = await client.query(
                 'SELECT roleID FROM role WHERE Role = $1',
                 [role]
             );
+    
             const roleID = roleResult.rows.length
                 ? roleResult.rows[0].roleid
-                : (await pool.query(
+                : (await client.query(
                     'INSERT INTO role (Role) VALUES ($1) RETURNING roleID',
                     [role]
-                )).rows[0].roleid;
-
+                  )).rows[0].roleid;
+    
             const hashedPassword = await bcrypt.hash(password, 10);
-
-            await pool.query(
+    
+            const userInsertResult = await client.query(
                 `INSERT INTO Users (Name, Email, password, roleID, schoolID) 
-                VALUES ($1, $2, $3, $4, $5)`,
+                 VALUES ($1, $2, $3, $4, $5) RETURNING userID`,
                 [name, email, hashedPassword, roleID, schoolID]
             );
-
-            res.status(201).json({ message: 'User registered successfully.' });
+    
+            const newUserID = userInsertResult.rows[0].userid;
+    
+            await client.query(
+                `INSERT INTO student_level (userID, xp, level)
+                 VALUES ($1, $2, $3)`,
+                [newUserID, 0, 1]
+            );
+    
+            await client.query('COMMIT');
+            res.status(201).json({ message: 'User registered and level initialized successfully.' });
+    
         } catch (error) {
+            await client.query('ROLLBACK');
             console.error('Error during registration:', error);
             res.status(500).json({ message: 'Internal server error.' });
+        } finally {
+            client.release();
         }
     });
-
+    
 
     // Login a user
     router.post('/login', async (req, res) => {

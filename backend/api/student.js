@@ -37,6 +37,28 @@ router.get('/completed-rounds', verifyToken, async (req, res) => {
     }
 });
 
+router.get("/get-level", verifyToken, async (req, res) => {
+    const { userID } = req.query;
+
+    try {
+        const result = await pool.query(
+            `SELECT xp, level FROM studentLevel WHERE userID = $1`,
+            [userID]
+        );
+
+        if (result.rows.length === 0) {
+
+            return res.status(404).json({ message: "Level data not found" });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error fetching level:", err);
+        res.status(500).json({ message: "Error fetching level" });
+    }
+});
+
+
     
 router.get("/get-streak", verifyToken, async (req, res) => {
     const { studentId } = req.query;
