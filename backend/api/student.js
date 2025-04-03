@@ -42,7 +42,7 @@ router.get("/get-level", verifyToken, async (req, res) => {
 
     try {
         const result = await pool.query(
-            `SELECT xp, level FROM studentLevel WHERE userID = $1`,
+            `SELECT xp, level FROM studentLevel WHERE "userId" = $1`,
             [userID]
         );
 
