@@ -55,8 +55,7 @@ module.exports = (pool) => {
                 newUserDifficulty,
             ]);
 
-            // 🎯 XP Award Logic
-            const xpEarned = 30; // or scale this dynamically if you want
+            const xpEarned = 30;
             const levelQuery = await pool.query('SELECT xp, level FROM studentLevel WHERE userID = $1', [userID]);
 
             if (levelQuery.rows.length === 0) {
@@ -67,7 +66,6 @@ module.exports = (pool) => {
             let { xp, level } = levelQuery.rows[0];
             xp += xpEarned;
 
-            // Handle multiple level-ups if enough XP
             while (xp >= xpForNextLevel(level)) {
                 xp -= xpForNextLevel(level);
                 level++;
