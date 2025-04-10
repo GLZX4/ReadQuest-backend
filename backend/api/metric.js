@@ -56,7 +56,7 @@ module.exports = (pool) => {
             ]);
 
             const xpEarned = 30;
-            const levelQuery = await pool.query('SELECT xp, level FROM studentLevel WHERE userID = $1', [userID]);
+            const levelQuery = await pool.query('SELECT xp, level FROM studentLevel WHERE userId = $1', [userID]);
 
             if (levelQuery.rows.length === 0) {
                 console.warn("No level data found for user:", userID);
