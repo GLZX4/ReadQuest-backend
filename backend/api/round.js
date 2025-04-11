@@ -97,62 +97,75 @@ module.exports = (pool) => {
     // Validate answer for a specific question
     router.post('/validate-answer', verifyToken, async (req, res) => {
         const { questionID, selectedAnswer } = req.body;
-
+    
+        console.log(" Validating Answer:", selectedAnswer);
+        console.log(" Question ID:", questionID);
+    
         if (!questionID) {
             return res.status(400).json({ message: 'questionID is required' });
         }
+    
         try {
             const result = await pool.query(
                 'SELECT questiontype, correctanswer FROM questions WHERE QuestionID = $1',
                 [questionID]
             );
-
+    
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Question not found' });
             }
-
+    
             let { questiontype, correctanswer } = result.rows[0];
-
+    
+            console.log(" Question Type:", questiontype);
+            console.log(" Correct Answer from DB (Raw):", correctanswer);
+    
+            // Try to parse correctanswer if it's JSON-like
             try {
                 if (typeof correctanswer === "string" && (correctanswer.startsWith("{") || correctanswer.startsWith("["))) {
                     correctanswer = JSON.parse(correctanswer);
+                    console.log(" Correct Answer (Parsed as Object):", correctanswer);
                 }
             } catch (err) {
-                console.warn("⚠️ Could not parse correctanswer, keeping as string:", correctanswer);
+                console.warn(" Could not parse correctanswer, keeping as string:", correctanswer);
             }
-
+    
             let isCorrect = false;
-
+    
             switch (questiontype) {
                 case 'drag_drop':
                     try {
+                        console.log(" Selected Answer (parsed):", selectedAnswer);
                         isCorrect = validateDragDrop(correctanswer, selectedAnswer);
                     } catch (error) {
                         console.error('Error processing JSON for drag_drop:', error);
                         return res.status(400).json({ message: 'Invalid answer format for drag_drop' });
                     }
                     break;
-
+    
                 case 'multipleChoice':
+                    console.log(" Comparing:", selectedAnswer, "vs", correctanswer);
                     isCorrect = selectedAnswer === correctanswer;
                     break;
-
+    
                 case 'trueFalse':
+                    console.log(" Comparing:", selectedAnswer, "vs", correctanswer);
                     isCorrect = selectedAnswer === correctanswer;
                     break;
-
+    
                 default:
                     return res.status(400).json({ message: `Unsupported question type: ${questiontype}` });
             }
-
-            console.log('Final Comparison Result:', isCorrect);
+    
+            console.log(" Final Comparison Result:", isCorrect);
             res.json({ isCorrect });
-
+    
         } catch (error) {
-            console.error('Error validating answer:', error);
+            console.error(' Error validating answer:', error);
             res.status(500).json({ message: 'Error validating answer' });
         }
     });
+    
 
     function validateDragDrop(correctanswer, selectedAnswer) {
         const sortedCorrect = [...correctanswer].sort((a, b) => a.position - b.position);
