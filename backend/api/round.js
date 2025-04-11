@@ -142,6 +142,10 @@ module.exports = (pool) => {
                         return res.status(400).json({ message: 'Invalid answer format for drag_drop' });
                     }
                     break;
+                case 'fillInTheBlank':
+                    console.log("🆚 Comparing:", selectedAnswer, "vs", correctanswer);
+                    isCorrect = selectedAnswer === correctanswer;
+                    break;
     
                 case 'multipleChoice':
                     console.log(" Comparing:", selectedAnswer, "vs", correctanswer);
