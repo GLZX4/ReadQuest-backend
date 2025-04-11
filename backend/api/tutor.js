@@ -8,7 +8,6 @@ require('dotenv').config();
 const router = express.Router();
 
 module.exports = (pool) => {
-    // Mock tutor data
     const mockTutorData = {
         classes: ['Class 1A', 'Class 2B'],
         students: [
@@ -17,7 +16,6 @@ module.exports = (pool) => {
         ],
     };
 
-    //List all endpoint data
     router.get('/', (req, res) => {
         const availableRoutes = router.stack
             .filter(r => r.route) 
@@ -32,7 +30,6 @@ module.exports = (pool) => {
         });
     });
     
-    // fetch tutor Data(just schoolid for now)
     router.get('/fetch-Tutor-Data', verifyToken, async (req, res) => {
         const { userid } = req.query;
     
@@ -63,7 +60,6 @@ module.exports = (pool) => {
     });
     
 
-    // Get student list for a tutor
     router.get('/studentsList', verifyToken, async (req, res) => {
         const { tutorID } = req.query;
 
@@ -78,23 +74,29 @@ module.exports = (pool) => {
                 `SELECT 
                     Users.UserID,
                     Users.Name, 
-                    COUNT(DISTINCT RoundAssociation.RoundID) AS TotalRounds, -- Total rounds completed by the student
-                    AVG(RoundAssociation.Score) AS AverageScore, -- Average score from the completed rounds
-                    PerformanceMetrics.accuracyRate AS AccuracyRate, -- Performance metric for accuracy
-                    PerformanceMetrics.completionRate AS CompletionRate -- Performance metric for completion
-                FROM Users
-                LEFT JOIN RoundAssociation ON Users.UserID = RoundAssociation.UserID -- Link users with their completed rounds
-                LEFT JOIN PerformanceMetrics ON Users.UserID = PerformanceMetrics.userID -- Link users with their performance metrics
-                WHERE Users.SchoolID = (
-                    SELECT SchoolID FROM Users WHERE Users.UserID = $1 -- Fetch schoolID based on tutorID
-                )
-                AND Users.roleID != 2 -- Exclude tutors
-                GROUP BY 
+                    COUNT(DISTINCT RoundAssociation.RoundID) AS TotalRounds,
+                    AVG(RoundAssociation.Score) AS AverageScore,
+                    PerformanceMetrics.accuracyRate AS AccuracyRate,
+                    PerformanceMetrics.completionRate AS CompletionRate,
+                    MAX(RoundAssociation.completedAt) AS LastActive,
+                    studentLevel.level AS Level,
+                    studentLevel.xp AS XP
+                    FROM Users
+                    LEFT JOIN RoundAssociation ON Users.UserID = RoundAssociation.UserID
+                    LEFT JOIN PerformanceMetrics ON Users.UserID = PerformanceMetrics.userID
+                    LEFT JOIN studentLevel ON Users.UserID = studentLevel.userID
+                    WHERE Users.SchoolID = (
+                    SELECT SchoolID FROM Users WHERE Users.UserID = $1
+                    )
+                    AND Users.roleID != 2
+                    GROUP BY 
                     Users.UserID, 
                     Users.Name, 
                     PerformanceMetrics.accuracyRate, 
-                    PerformanceMetrics.completionRate
-                ORDER BY TotalRounds DESC; -- Rank by rounds completed
+                    PerformanceMetrics.completionRate,
+                    studentLevel.level,
+                    studentLevel.xp
+                    ORDER BY TotalRounds DESC;
                 `,
                 [tutorID]
             );
