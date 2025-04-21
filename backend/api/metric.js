@@ -55,7 +55,16 @@ module.exports = (pool) => {
                 newUserDifficulty,
             ]);
 
-            const xpEarned = 30;
+            
+            let baseXP = 20;
+            let timeFactor = Math.max(0, 100 - averageAnswerTime); // up to 100 points
+            let accuracyFactor = accuracyRate * 0.4;                // up to 40 points
+            let completionFactor = completionRate * 0.3;            // up to 30 points
+
+            let rawXP = baseXP + timeFactor + accuracyFactor + completionFactor;
+            let xpEarned = Math.floor(Math.min(rawXP, 100)); // Cap XP to prevent abuse
+            console.log(`XP Breakdown: base=${baseXP}, time=${timeFactor}, accuracy=${accuracyFactor}, completion=${completionFactor}, total=${xpEarned}`);
+
             const levelQuery = await pool.query('SELECT xp, level FROM studentLevel WHERE userId = $1', [userID]);
 
             if (levelQuery.rows.length === 0) {

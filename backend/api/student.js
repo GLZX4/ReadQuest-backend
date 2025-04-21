@@ -129,7 +129,7 @@ router.post("/update-streak", verifyToken, async (req, res) => {
 
         let newStreak = 1;
         if (lastActiveDate === today) {
-            return res.status(200).json({ message: "✅ Already played today!", currentStreak: currentstreak, bestStreak: beststreak });
+            return res.status(200).json({ message: " Already played today!", currentStreak: currentstreak, bestStreak: beststreak });
         }
 
         const yesterday = new Date();
