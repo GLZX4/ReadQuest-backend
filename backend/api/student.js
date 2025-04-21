@@ -77,7 +77,7 @@ router.get("/get-streak", verifyToken, async (req, res) => {
         console.log("Query Result:", result.rows);
 
         if (result.rows.length === 0) {
-            console.warn("⚠️ No streak record found for studentId:", studentId);
+            console.warn("No streak record found for studentId:", studentId);
             return res.status(200).json({ current: 0, best: 0 });
         }
 
@@ -132,7 +132,11 @@ router.post("/update-streak", verifyToken, async (req, res) => {
             return res.status(200).json({ message: "✅ Already played today!", currentStreak: currentstreak, bestStreak: beststreak });
         }
 
-        if (new Date(lastActiveDate).getTime() === new Date(today).getTime() - 86400000) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayString = yesterday.toISOString().split("T")[0];
+        
+        if (lastActiveDate === yesterdayString) {
             newStreak = currentstreak + 1;
         }
 
