@@ -9,6 +9,12 @@ module.exports = (pool) => {
     }
 
     router.post('/process-metrics', async (req, res) => {
+
+        if (!req.body.userID) {
+            console.log('userID is required');
+            return res.status(400).json({ message: 'userID is required' });
+        }
+
         const userID = Number(req.body.userID); 
         const metrics = calculateMetrics(req.body);
         const newUserDifficulty = String(calculateDifficultyLevel(metrics)); 

@@ -140,7 +140,7 @@ router.post('/add-Question-Set', verifyToken, async (req, res) => {
             [`${questionType} Set`]
         );
         const qbankid = questionBankRes.rows[0].qbankid;
-        console.log(`✅ Inserted question bank: ${qbankid}`);
+        console.log(`Inserted question bank: ${qbankid}`);
 
         // Insert questions
         const questionInsertPromises = questions.map(async (q) => {

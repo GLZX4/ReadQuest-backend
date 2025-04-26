@@ -1,4 +1,4 @@
-const { calculateMetrics } = require("../services/MetricsService");
+const { calculateMetrics } = require("../../services/MetricsService");
 
 describe("Metrics Calculation", () => {
     test("should correctly calculate metrics", () => {

@@ -51,7 +51,11 @@ router.get("/get-level", verifyToken, async (req, res) => {
             return res.status(404).json({ message: "Level data not found" });
         }
 
-        res.json(result.rows[0]);
+        res.json({
+            xp: Number(result.rows[0].xp),
+            level: Number(result.rows[0].level)
+          });
+          
     } catch (err) {
         console.error("Error fetching level:", err);
         res.status(500).json({ message: "Error fetching level" });
