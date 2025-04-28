@@ -36,7 +36,6 @@ describe('Tutor API Integration Tests', () => {
       .query({ tutorID: testTutorID });
 
     expect([200, 404]).toContain(response.statusCode); 
-    // 404 is fine if there are genuinely no students linked yet
   });
 
   it('should fail to fetch students if no tutor ID given', async () => {

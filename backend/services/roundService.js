@@ -36,8 +36,6 @@ async function selectRoundByDifficulty(pool, req, res) {
                 console.log('Selected Round:', randomRound);
                 return res.json(randomRound);
             }
-
-            console.log(`No rounds found for difficulty '${currentLevel}', trying next...`);
         }
 
         return res.status(404).json({ message: 'No rounds available for any difficulty.' });
@@ -101,9 +99,6 @@ async function getQuestionByIndex(pool, req, res) {
 
 async function validateAnswer(pool, req, res) {
     const { questionID, selectedAnswer } = req.body;
-
-    console.log('Validating Answer:', selectedAnswer);
-    console.log('Question ID:', questionID);
 
     if (!questionID) {
         return res.status(400).json({ message: 'questionID is required' });

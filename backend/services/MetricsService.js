@@ -1,14 +1,3 @@
-/**
- * Calculates performance metrics for a student based on their activity during a round.
- * @param {Object} stats - The raw data from the round.
- * @param {number} stats.correctAnswersCount - The number of correct answers.
- * @param {number} stats.totalQuestions - The total number of questions.
- * @param {number} stats.totalAnswerTime - The total time spent answering questions.
- * @param {number} stats.totalAttempts - The total number of attempts made by the student.
- * @param {number} stats.roundsPlayed - The total number of rounds played.
- * @param {number} stats.totalRoundsAvailable - The total number of rounds available.
- * @returns {Object} - The calculated metrics.
- */
 function calculateMetrics(stats) {
     const {
         correctAnswersCount,
@@ -42,19 +31,18 @@ function calculateDifficultyLevel(metrics) {
         completionRate,
     } = metrics;
 
-    console.log("✅ Converted Metrics:", metrics);
 
     const weights = {
-        accuracyRate: 0.5,  // Increase influence of accuracy
-        averageAnswerTime: 0.2,  // Reduce penalty from time
-        attemptsPerQuestion: 0.2,  // Slightly higher weight
-        completionRate: 0.1,  // Keep lower, but still contributing
+        accuracyRate: 0.5,
+        averageAnswerTime: 0.2,
+        attemptsPerQuestion: 0.2,
+        completionRate: 0.1,
     };
 
     const normalizedMetrics = {
-        accuracyRate: Math.max(accuracyRate / 100, 0.3),  // Ensure minimum contribution
-        averageAnswerTime: Math.max(1 - (averageAnswerTime / 30), 0.2),  // More forgiving
-        attemptsPerQuestion: Math.max(1 - (attemptsPerQuestion / 3), 0.3),  // More impact from lower attempts
+        accuracyRate: Math.max(accuracyRate / 100, 0.3), 
+        averageAnswerTime: Math.max(1 - (averageAnswerTime / 30), 0.2),  
+        attemptsPerQuestion: Math.max(1 - (attemptsPerQuestion / 3), 0.3), 
         completionRate: completionRate / 100,
     };
 
@@ -76,8 +64,6 @@ function calculateDifficultyLevel(metrics) {
     } else {
         recommendedDifficulty = 'hard';
     }
-
-    console.log(`Recommended Difficulty: ${recommendedDifficulty}`);
     
     return recommendedDifficulty;
 }
