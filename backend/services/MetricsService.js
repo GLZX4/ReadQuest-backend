@@ -40,11 +40,12 @@ function calculateDifficultyLevel(metrics) {
     };
 
     const normalizedMetrics = {
-        accuracyRate: Math.max(accuracyRate / 100, 0.3), 
-        averageAnswerTime: Math.max(1 - (averageAnswerTime / 30), 0.2),  
-        attemptsPerQuestion: Math.max(1 - (attemptsPerQuestion / 3), 0.3), 
-        completionRate: completionRate / 100,
-    };
+        accuracyRate: Math.max(accuracyRate / 100, 0), 
+        averageAnswerTime: Math.max(0, 1 - (averageAnswerTime / 30)), 
+        attemptsPerQuestion: Math.max(0, 1 - (attemptsPerQuestion / 3)), 
+        completionRate: Math.max(completionRate / 100, 0),
+      };
+      
 
     console.log("Normalized Metrics:", normalizedMetrics);
 
@@ -58,11 +59,11 @@ function calculateDifficultyLevel(metrics) {
 
     let recommendedDifficulty;
     if (performanceScore >= 0.78) {
-        recommendedDifficulty = 'easy';
+        recommendedDifficulty = 'hard';
     } else if (performanceScore >= 0.6) {
         recommendedDifficulty = 'medium';
     } else {
-        recommendedDifficulty = 'hard';
+        recommendedDifficulty = 'easy';
     }
     
     return recommendedDifficulty;
