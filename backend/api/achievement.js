@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const verifyToken = require('../middleware/authMiddleware');
+const verifyToken = require('../middleware/authMiddleware');
 const { updateAchievementProgress, fetchStudentAchievements } = require('../services/achievementService');
 
 module.exports = (pool) => {
