@@ -58,9 +58,9 @@ function calculateDifficultyLevel(metrics) {
     console.log(`Performance Score: ${performanceScore.toFixed(2)}`);
 
     let recommendedDifficulty;
-    if (performanceScore >= 0.78) {
+    if (performanceScore >= 0.85) {
         recommendedDifficulty = 'hard';
-    } else if (performanceScore >= 0.6) {
+    } else if (performanceScore >= 0.7) {
         recommendedDifficulty = 'medium';
     } else {
         recommendedDifficulty = 'easy';
