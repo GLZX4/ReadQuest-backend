@@ -26,6 +26,7 @@ module.exports = (pool) => {
         const completionRate = Number(metrics.completionRate) || 0;
 
         console.log({
+            "receivedMetrics": metrics,
             userID,
             totalRoundsPlayed,
             averageAnswerTime,
