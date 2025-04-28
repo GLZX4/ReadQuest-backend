@@ -78,8 +78,21 @@ module.exports = (pool) => {
 
             if (levelQuery.rows.length === 0) {
                 console.warn("No level data found for user:", userID);
-                return res.status(400).json({ message: "No level data found." });
+            
+                await pool.query(
+                    `INSERT INTO studentLevel (userId, xp, level, lastUpdated) VALUES ($1, $2, $3, NOW())`,
+                    [userID, 0, 1]
+                );
+            
+                const newLevelQuery = await pool.query('SELECT xp, level FROM studentLevel WHERE userId = $1', [userID]);
+                if (newLevelQuery.rows.length === 0) {
+                    console.error("Failed to create studentLevel entry for user:", userID);
+                    return res.status(500).json({ message: "Failed to initialize level system." });
+                }
+            
+                levelQuery.rows = newLevelQuery.rows;
             }
+            
 
             let { xp, level } = levelQuery.rows[0];
             xp += xpEarned;
