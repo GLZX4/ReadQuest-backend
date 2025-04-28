@@ -16,14 +16,16 @@ module.exports = (pool) => {
         }
 
         const userID = Number(req.body.userID); 
-        const metrics = calculateMetrics(req.body);
+        const rawStats = req.body;
+        const metrics = calculateMetrics(rawStats); 
         const newUserDifficulty = String(calculateDifficultyLevel(metrics)); 
 
-        const totalRoundsPlayed = Number.isInteger(metrics.totalRoundsPlayed) ? metrics.totalRoundsPlayed : 0;
+        const totalRoundsPlayed = Number(rawStats.roundsPlayed) || 0;
         const averageAnswerTime = Number(metrics.averageAnswerTime) || 0;
         const accuracyRate = Number(metrics.accuracyRate) || 0;
         const attemptsPerQuestion = Number(metrics.attemptsPerQuestion) || 0;
-        const completionRate = Number(metrics.completionRate) || 0;
+        const completionRate = Number(rawStats.completionRate) || 0;
+        
 
         console.log({
             "receivedMetrics": metrics,
