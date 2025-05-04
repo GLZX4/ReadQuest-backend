@@ -100,8 +100,6 @@ async function fetchStudentAchievements(pool, studentId) {
     }));
 }
 
-
-
 function calculateProgress(progressData, achievementType) {
     let progressValue = 0;
     let unlockConditionValue = 1;
@@ -151,8 +149,9 @@ function calculateProgress(progressData, achievementType) {
             break;
     }
 
-    return Math.round((progressValue / unlockConditionValue) * 100);
+    return Math.min(100, Math.round((progressValue / unlockConditionValue) * 100));  // cap at 100%
 }
+
 
 module.exports = {
     updateAchievementProgress,
