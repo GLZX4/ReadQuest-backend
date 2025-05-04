@@ -16,6 +16,8 @@ module.exports = (pool) => {
     router.get('/retrieve-qBank', verifyToken, (req, res) => retrieveQuestionBank(pool, req, res));
     router.get('/get-question', verifyToken, (req, res) => getQuestionByIndex(pool, req, res));
     router.post('/validate-answer', verifyToken, (req, res) => validateAnswer(pool, req, res));
+    router.get('/get-total-questions', async (req, res) => getQuestionCount(pool, req, res));
+    
 
     return router;
 };

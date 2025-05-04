@@ -151,9 +151,36 @@ async function validateAnswer(pool, req, res) {
     }
 }
 
+async function getQuestionCount(pool, req, res) {
+    try {
+        const { qBankID } = req.query;
+
+        if (!qBankID) {
+            return res.status(400).json({ message: 'QBankID is required' });
+        }
+
+        const result = await pool.query(
+            `SELECT COUNT(*) AS question_count
+             FROM Questions
+             WHERE qBankID = $1`,
+            [qBankID]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'No questions found for this QBankID' });
+        }
+
+        res.json({ questionCount: parseInt(result.rows[0].question_count, 10) });
+    } catch (error) {
+        console.error('Error fetching question count:', error);
+        res.status(500).json({ message: 'Error fetching question count' });
+    }
+}
+
 module.exports = {
     selectRoundByDifficulty,
     retrieveQuestionBank,
     getQuestionByIndex,
     validateAnswer,
+    getQuestionCount,
 };
