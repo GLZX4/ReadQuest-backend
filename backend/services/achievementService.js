@@ -1,34 +1,52 @@
 async function updateAchievementProgress(pool, data) {
     const { studentId, achievementType, progressUpdate } = data;
-    
+
+    console.log(` updateAchievementProgress called with:`, data);
+
     if (!studentId || !achievementType || !progressUpdate) {
+        console.error(' Missing required fields:', { studentId, achievementType, progressUpdate });
         throw { statusCode: 400, message: 'Missing required fields' };
     }
 
     const achievementQuery = `SELECT achievementid FROM achievements WHERE achievementtype = $1`;
     const achievementResult = await pool.query(achievementQuery, [achievementType]);
 
+    console.log(` Fetched achievement ID for type "${achievementType}":`, achievementResult.rows);
+
     if (achievementResult.rows.length === 0) {
+        console.error(' No achievement found for type:', achievementType);
         throw { statusCode: 404, message: 'Achievement type not found' };
     }
 
     const achievementId = achievementResult.rows[0].achievementid;
+
     const checkQuery = `SELECT * FROM student_achievements WHERE userid = $1 AND achievementid = $2`;
     const checkResult = await pool.query(checkQuery, [studentId, achievementId]);
+
+    console.log(` Existing progress row found:`, checkResult.rows);
 
     let isUnlocked = false;
     let progressData = checkResult.rows.length > 0 ? checkResult.rows[0].progress || {} : {};
 
+    console.log(` Starting progress data:`, progressData);
+
+    // Apply the progress update
     Object.keys(progressUpdate).forEach((key) => {
         progressData[key] = (progressData[key] || 0) + progressUpdate[key];
     });
 
+    console.log(` Updated progress data after applying update:`, progressData);
+
     const progressPercentage = calculateProgress(progressData, achievementType);
+    console.log(` Progress percentage calculated: ${progressPercentage}%`);
+
     if (progressPercentage >= 100) {
         isUnlocked = true;
+        console.log(` Achievement unlocked!`);
     }
 
     if (checkResult.rows.length > 0) {
+        console.log(` Updating existing achievement progress...`);
         const updateQuery = `
             UPDATE student_achievements 
             SET progress = $1, isunlocked = $2, unlockedat = CASE WHEN $2 THEN NOW() ELSE NULL END
@@ -36,19 +54,24 @@ async function updateAchievementProgress(pool, data) {
             RETURNING *;
         `;
         const updated = await pool.query(updateQuery, [progressData, isUnlocked, studentId, achievementId]);
+        console.log(` Update result:`, updated.rows[0]);
         return updated.rows[0];
     } else {
+        console.log(` Inserting new achievement progress row...`);
         const insertQuery = `
             INSERT INTO student_achievements (userid, achievementid, progress, isunlocked, unlockedat)
             VALUES ($1, $2, $3, $4, CASE WHEN $4 THEN NOW() ELSE NULL END)
             RETURNING *;
         `;
         const inserted = await pool.query(insertQuery, [studentId, achievementId, progressData, isUnlocked]);
+        console.log(` Insert result:`, inserted.rows[0]);
         return inserted.rows[0];
     }
 }
 
 async function fetchStudentAchievements(pool, studentId) {
+    console.log(` Fetching achievements for student ID: ${studentId}`);
+
     const query = `
         SELECT 
             a.achievementid, 
@@ -64,6 +87,8 @@ async function fetchStudentAchievements(pool, studentId) {
 
     const result = await pool.query(query, [studentId]);
 
+    console.log(`Achievement rows fetched:`, result.rows);
+
     return result.rows.map(achievement => ({
         achievementId: achievement.achievementid,
         type: achievement.achievementtype,
@@ -74,6 +99,8 @@ async function fetchStudentAchievements(pool, studentId) {
         progressPercentage: calculateProgress(achievement.progress, achievement.achievementtype),
     }));
 }
+
+
 
 function calculateProgress(progressData, achievementType) {
     let progressValue = 0;
