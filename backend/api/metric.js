@@ -39,19 +39,40 @@ module.exports = (pool) => {
         });
 
         const upsertQuery = `
-            INSERT INTO performancemetrics (userid, totalroundsplayed, averageanswertime, accuracyrate, attemptsperquestion, completionrate, difficultylevel, lastupdated)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-            ON CONFLICT (userid) 
-            DO UPDATE SET 
-                totalroundsplayed = EXCLUDED.totalroundsplayed,
-                averageanswertime = EXCLUDED.averageanswertime,
-                accuracyrate = EXCLUDED.accuracyrate,
-                attemptsperquestion = EXCLUDED.attemptsperquestion,
-                completionrate = EXCLUDED.completionrate,
-                difficultylevel = EXCLUDED.difficultylevel,
-                lastupdated = NOW()
-            RETURNING *;
-        `;
+        INSERT INTO performancemetrics (
+            userid,
+            totalroundsplayed,
+            averageanswertime,
+            accuracyrate,
+            attemptsperquestion,
+            completionrate,
+            difficultylevel,
+            lastupdated
+        )
+        VALUES ($1, 1, $2, $3, $4, $5, $6, NOW())
+        ON CONFLICT (userid)
+        DO UPDATE SET
+            totalroundsplayed = performancemetrics.totalroundsplayed + 1,
+            averageanswertime = (
+                (performancemetrics.averageanswertime * performancemetrics.totalroundsplayed + EXCLUDED.averageanswertime)
+                / (performancemetrics.totalroundsplayed + 1)
+            ),
+            accuracyrate = (
+                (performancemetrics.accuracyrate * performancemetrics.totalroundsplayed + EXCLUDED.accuracyrate)
+                / (performancemetrics.totalroundsplayed + 1)
+            ),
+            attemptsperquestion = (
+                (performancemetrics.attemptsperquestion * performancemetrics.totalroundsplayed + EXCLUDED.attemptsperquestion)
+                / (performancemetrics.totalroundsplayed + 1)
+            ),
+            completionrate = (
+                (performancemetrics.completionrate * performancemetrics.totalroundsplayed + EXCLUDED.completionrate)
+                / (performancemetrics.totalroundsplayed + 1)
+            ),
+            difficultylevel = EXCLUDED.difficultylevel,
+            lastupdated = NOW()
+        RETURNING *;
+    `;
 
         try {
             const result = await pool.query(upsertQuery, [
