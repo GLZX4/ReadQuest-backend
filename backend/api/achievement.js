@@ -8,7 +8,6 @@ module.exports = (pool) => {
 
     // Update student achievement progress
     router.post('/update-progress', verifyToken, async (req, res) => {
-        console.log('Received request to update achievement progress:', req);
         try {
             const result = await updateAchievementProgress(pool, req.body);
             res.status(200).json(result);
