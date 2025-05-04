@@ -4,7 +4,8 @@ const {
     selectRoundByDifficulty,
     retrieveQuestionBank,
     getQuestionByIndex,
-    validateAnswer
+    validateAnswer,
+    getQuestionCount
 } = require('../services/roundService');
 
 require('dotenv').config();

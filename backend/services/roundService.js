@@ -170,7 +170,7 @@ async function getQuestionCount(pool, req, res) {
             return res.status(404).json({ message: 'No questions found for this QBankID' });
         }
 
-        res.json({ questionCount: parseInt(result.rows[0].question_count, 10) });
+        res.json({ totalQuestions: parseInt(result.rows[0].question_count, 10) });
     } catch (error) {
         console.error('Error fetching question count:', error);
         res.status(500).json({ message: 'Error fetching question count' });
