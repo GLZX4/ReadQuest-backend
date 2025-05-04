@@ -77,15 +77,14 @@ module.exports = (pool) => {
         try {
             const result = await pool.query(upsertQuery, [
                 userID,
-                totalRoundsPlayed,
                 averageAnswerTime,
                 accuracyRate,
                 attemptsPerQuestion,
                 completionRate,
                 newUserDifficulty,
             ]);
-
             
+
             let baseXP = 20;
             let timeFactor = Math.max(0, 100 - averageAnswerTime); // up to 100 points
             let accuracyFactor = accuracyRate * 0.4;                // up to 40 points
